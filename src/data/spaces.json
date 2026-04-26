@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "name": "Sala Innovación",
+    "capacity": 10,
+    "location": "Piso 2, Edificio A",
+    "type": "Reunión",
+    "amenities": ["Proyector", "WiFi", "Pizarrón"],
+    "image": "https://picsum.photos/seed/sala1/400/200",
+    "available": true
+  },
+  {
+    "id": 2,
+    "name": "Auditorio Central",
+    "capacity": 50,
+    "location": "Piso 1, Edificio B",
+    "type": "Auditorio",
+    "amenities": ["Proyector HD", "Sonido", "WiFi", "Micrófono"],
+    "image": "https://picsum.photos/seed/sala2/400/200",
+    "available": true
+  },
+  {
+    "id": 3,
+    "name": "Sala Colaboración",
+    "capacity": 6,
+    "location": "Piso 3, Edificio A",
+    "type": "Trabajo colaborativo",
+    "amenities": ["TV 65\"", "WiFi", "Pizarrón"],
+    "image": "https://picsum.photos/seed/sala3/400/200",
+    "available": false
+  },
+  {
+    "id": 4,
+    "name": "Sala Ejecutiva",
+    "capacity": 8,
+    "location": "Piso 4, Edificio C",
+    "type": "Reunión ejecutiva",
+    "amenities": ["Proyector", "WiFi", "Videoconferencia", "Café"],
+    "image": "https://picsum.photos/seed/sala4/400/200",
+    "available": true
+  },
+  {
+    "id": 5,
+    "name": "Sala Capacitación",
+    "capacity": 25,
+    "location": "Piso 1, Edificio D",
+    "type": "Capacitación",
+    "amenities": ["Proyector", "WiFi", "30 computadores"],
+    "image": "https://picsum.photos/seed/sala5/400/200",
+    "available": true
+  },
+  {
+    "id": 6,
+    "name": "Sala Creativa",
+    "capacity": 12,
+    "location": "Piso 2, Edificio B",
+    "type": "Brainstorming",
+    "amenities": ["Pizarrón blanco", "WiFi", "Post-its", "Proyector"],
+    "image": "https://picsum.photos/seed/sala6/400/200",
+    "available": true
+  }
+]

@@ -1,0 +1,4 @@
+[
+  { "id": 1, "email": "admin@salafinder.com", "password": "123456", "name": "Carlos Mendoza" },
+  { "id": 2, "email": "maria@salafinder.com", "password": "123456", "name": "María López" }
+]

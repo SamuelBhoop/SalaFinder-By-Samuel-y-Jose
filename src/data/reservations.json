@@ -1,0 +1,35 @@
+[
+  {
+    "id": 1,
+    "spaceId": 1,
+    "spaceName": "Sala Innovación",
+    "userId": 1,
+    "date": "2026-04-28",
+    "startTime": "09:00",
+    "endTime": "10:30",
+    "status": "confirmed",
+    "purpose": "Reunión de equipo"
+  },
+  {
+    "id": 2,
+    "spaceId": 2,
+    "spaceName": "Auditorio Central",
+    "userId": 1,
+    "date": "2026-04-29",
+    "startTime": "14:00",
+    "endTime": "16:00",
+    "status": "confirmed",
+    "purpose": "Presentación de proyecto"
+  },
+  {
+    "id": 3,
+    "spaceId": 4,
+    "spaceName": "Sala Ejecutiva",
+    "userId": 1,
+    "date": "2026-04-25",
+    "startTime": "11:00",
+    "endTime": "12:00",
+    "status": "cancelled",
+    "purpose": "Revisión de presupuesto"
+  }
+]
