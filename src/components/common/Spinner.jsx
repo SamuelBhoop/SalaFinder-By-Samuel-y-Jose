@@ -1,11 +1,11 @@
-import PropTypes from 'prop-types'
+﻿import PropTypes from 'prop-types'
 
 export default function Spinner({ size = 'md', className = '' }) {
   const sizes = { sm: 'h-4 w-4', md: 'h-6 w-6', lg: 'h-10 w-10' }
 
   return (
     <svg
-      className={`animate-spin text-indigo-600 ${sizes[size]} ${className}`}
+      className={`animate-spin text-teal-600 ${sizes[size]} ${className}`}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"

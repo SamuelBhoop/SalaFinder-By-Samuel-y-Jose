@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+﻿import { useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Button from './common/Button'
 
@@ -44,7 +44,7 @@ export default function SpaceCard({ space }) {
 
         <div className="flex flex-wrap gap-1.5 mb-4 flex-1">
           {space.amenities.map((amenity) => (
-            <span key={amenity} className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md text-xs font-medium">
+            <span key={amenity} className="px-2 py-0.5 bg-teal-50 text-teal-700 rounded-md text-xs font-medium">
               {amenity}
             </span>
           ))}

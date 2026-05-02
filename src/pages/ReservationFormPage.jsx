@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getSpaceById } from '../api/spaces'
 import { createReservation } from '../api/reservations'
@@ -119,7 +119,7 @@ export default function ReservationFormPage() {
       <nav aria-label="Migas de pan" className="mb-6">
         <ol className="flex items-center gap-2 text-sm text-gray-400">
           <li>
-            <button onClick={() => navigate('/spaces')} className="hover:text-indigo-600 transition-colors">
+            <button onClick={() => navigate('/spaces')} className="hover:text-teal-600 transition-colors">
               Espacios
             </button>
           </li>
@@ -136,7 +136,7 @@ export default function ReservationFormPage() {
       </header>
 
       {/* Space summary */}
-      <div className="bg-indigo-50 rounded-xl p-4 mb-6 flex items-center gap-4 border border-indigo-100">
+      <div className="bg-teal-50 rounded-xl p-4 mb-6 flex items-center gap-4 border border-teal-100">
         <img
           src={space?.image}
           alt={space?.name}
@@ -167,7 +167,7 @@ export default function ReservationFormPage() {
             min={new Date().toISOString().split('T')[0]}
             aria-invalid={!!errors.date}
             aria-describedby={errors.date ? 'date-error' : undefined}
-            className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+            className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 ${
               errors.date ? 'border-red-400 bg-red-50' : 'border-gray-300'
             }`}
           />
@@ -192,7 +192,7 @@ export default function ReservationFormPage() {
               onChange={handleChange}
               aria-invalid={!!errors.startTime}
               aria-describedby={errors.startTime ? 'startTime-error' : undefined}
-              className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+              className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 ${
                 errors.startTime ? 'border-red-400 bg-red-50' : 'border-gray-300'
               }`}
             />
@@ -214,7 +214,7 @@ export default function ReservationFormPage() {
               onChange={handleChange}
               aria-invalid={!!errors.endTime}
               aria-describedby={errors.endTime ? 'endTime-error' : undefined}
-              className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+              className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 ${
                 errors.endTime ? 'border-red-400 bg-red-50' : 'border-gray-300'
               }`}
             />
@@ -240,7 +240,7 @@ export default function ReservationFormPage() {
             placeholder="Ej: Reunión de equipo, Presentación de proyecto..."
             aria-invalid={!!errors.purpose}
             aria-describedby={errors.purpose ? 'purpose-error' : undefined}
-            className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none ${
+            className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none ${
               errors.purpose ? 'border-red-400 bg-red-50' : 'border-gray-300'
             }`}
           />

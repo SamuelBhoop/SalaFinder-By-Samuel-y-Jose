@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { getReservationsByUser } from '../api/reservations'
 import Spinner from '../components/common/Spinner'
 import ErrorMessage from '../components/common/ErrorMessage'
@@ -9,7 +9,7 @@ const HOURS = Array.from({ length: 12 }, (_, i) => i + 8) // 8:00 to 19:00
 const DAY_NAMES = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
 const COLORS = [
-  'bg-indigo-100 border-indigo-300 text-indigo-800',
+  'bg-teal-100 border-teal-300 text-teal-800',
   'bg-blue-100 border-blue-300 text-blue-800',
   'bg-purple-100 border-purple-300 text-purple-800',
   'bg-pink-100 border-pink-300 text-pink-800',
@@ -126,14 +126,14 @@ export default function CalendarPage() {
                   >
                     <p
                       className={`text-xs font-semibold uppercase tracking-wide ${
-                        isToday(date) ? 'text-indigo-600' : 'text-gray-400'
+                        isToday(date) ? 'text-teal-600' : 'text-gray-400'
                       }`}
                     >
                       {DAY_NAMES[i]}
                     </p>
                     <p
                       className={`text-xl font-bold mt-0.5 w-9 h-9 flex items-center justify-center mx-auto rounded-full ${
-                        isToday(date) ? 'bg-indigo-600 text-white' : 'text-gray-800'
+                        isToday(date) ? 'bg-teal-600 text-white' : 'text-gray-800'
                       }`}
                     >
                       {date.getDate()}
@@ -154,7 +154,7 @@ export default function CalendarPage() {
                       <td
                         key={i}
                         className={`border-r last:border-r-0 border-gray-100 p-1 h-14 align-top ${
-                          isToday(date) ? 'bg-indigo-50/40' : ''
+                          isToday(date) ? 'bg-teal-50/40' : ''
                         }`}
                       >
                         {slots.map((r, ri) => (

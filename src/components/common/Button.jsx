@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types'
+﻿import PropTypes from 'prop-types'
 
 export default function Button({
   children,
@@ -12,10 +12,10 @@ export default function Button({
     'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
 
   const variants = {
-    primary: 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500',
+    primary: 'bg-teal-600 text-white hover:bg-teal-700 focus:ring-teal-500',
     secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-400',
     danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    ghost: 'text-indigo-600 hover:bg-indigo-50 focus:ring-indigo-500',
+    ghost: 'text-teal-600 hover:bg-teal-50 focus:ring-teal-500',
   }
 
   const sizes = {

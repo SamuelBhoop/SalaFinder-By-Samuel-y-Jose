@@ -6,7 +6,7 @@
     "location": "Piso 2, Edificio A",
     "type": "Reunión",
     "amenities": ["Proyector", "WiFi", "Pizarrón"],
-    "image": "https://picsum.photos/seed/sala1/400/200",
+    "image": "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=200&fit=crop&auto=format",
     "available": true
   },
   {
@@ -16,7 +16,7 @@
     "location": "Piso 1, Edificio B",
     "type": "Auditorio",
     "amenities": ["Proyector HD", "Sonido", "WiFi", "Micrófono"],
-    "image": "https://picsum.photos/seed/sala2/400/200",
+    "image": "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=400&h=200&fit=crop&auto=format",
     "available": true
   },
   {
@@ -26,7 +26,7 @@
     "location": "Piso 3, Edificio A",
     "type": "Trabajo colaborativo",
     "amenities": ["TV 65\"", "WiFi", "Pizarrón"],
-    "image": "https://picsum.photos/seed/sala3/400/200",
+    "image": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=400&h=200&fit=crop&auto=format",
     "available": false
   },
   {
@@ -36,7 +36,7 @@
     "location": "Piso 4, Edificio C",
     "type": "Reunión ejecutiva",
     "amenities": ["Proyector", "WiFi", "Videoconferencia", "Café"],
-    "image": "https://picsum.photos/seed/sala4/400/200",
+    "image": "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=200&fit=crop&auto=format",
     "available": true
   },
   {
@@ -46,7 +46,7 @@
     "location": "Piso 1, Edificio D",
     "type": "Capacitación",
     "amenities": ["Proyector", "WiFi", "30 computadores"],
-    "image": "https://picsum.photos/seed/sala5/400/200",
+    "image": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400&h=200&fit=crop&auto=format",
     "available": true
   },
   {
@@ -56,7 +56,7 @@
     "location": "Piso 2, Edificio B",
     "type": "Brainstorming",
     "amenities": ["Pizarrón blanco", "WiFi", "Post-its", "Proyector"],
-    "image": "https://picsum.photos/seed/sala6/400/200",
+    "image": "https://images.unsplash.com/photo-1531973576160-7125cd663d86?w=400&h=200&fit=crop&auto=format",
     "available": true
   }
 ]
