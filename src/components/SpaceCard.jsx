@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import PropTypes from 'prop-types'
 import Button from './common/Button'
 
 export default function SpaceCard({ space }) {
@@ -59,4 +60,17 @@ export default function SpaceCard({ space }) {
       </div>
     </article>
   )
+}
+
+SpaceCard.propTypes = {
+  space: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string.isRequired,
+    capacity: PropTypes.number.isRequired,
+    location: PropTypes.string.isRequired,
+    type: PropTypes.string.isRequired,
+    amenities: PropTypes.arrayOf(PropTypes.string).isRequired,
+    image: PropTypes.string.isRequired,
+    available: PropTypes.bool.isRequired,
+  }).isRequired,
 }

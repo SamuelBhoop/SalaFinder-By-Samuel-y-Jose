@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 import Button from './common/Button'
 
 const statusConfig = {
@@ -60,4 +61,17 @@ export default function ReservationCard({ reservation, onCancel }) {
       )}
     </article>
   )
+}
+
+ReservationCard.propTypes = {
+  reservation: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    spaceName: PropTypes.string.isRequired,
+    date: PropTypes.string.isRequired,
+    startTime: PropTypes.string.isRequired,
+    endTime: PropTypes.string.isRequired,
+    status: PropTypes.oneOf(['confirmed', 'cancelled', 'pending']).isRequired,
+    purpose: PropTypes.string,
+  }).isRequired,
+  onCancel: PropTypes.func,
 }

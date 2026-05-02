@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types'
+
 export default function ErrorMessage({ message, onRetry, className = '' }) {
   return (
     <div className={`rounded-lg bg-red-50 border border-red-200 p-4 ${className}`} role="alert">
@@ -23,4 +25,10 @@ export default function ErrorMessage({ message, onRetry, className = '' }) {
       </div>
     </div>
   )
+}
+
+ErrorMessage.propTypes = {
+  message: PropTypes.string.isRequired,
+  onRetry: PropTypes.func,
+  className: PropTypes.string,
 }

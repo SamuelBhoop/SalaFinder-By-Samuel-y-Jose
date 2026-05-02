@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types'
+
 export default function EmptyState({ title, description, action }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
@@ -16,4 +18,10 @@ export default function EmptyState({ title, description, action }) {
       {action}
     </div>
   )
+}
+
+EmptyState.propTypes = {
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string,
+  action: PropTypes.node,
 }
