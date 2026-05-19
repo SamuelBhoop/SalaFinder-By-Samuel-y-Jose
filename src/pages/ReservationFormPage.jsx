@@ -1,7 +1,9 @@
 ﻿import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { getSpaceById } from '../api/spaces'
 import { createReservation } from '../api/reservations'
+import { getSpaceConfig } from '../utils/spaceImages'
 import Button from '../components/common/Button'
 import Spinner from '../components/common/Spinner'
 import ErrorMessage from '../components/common/ErrorMessage'
@@ -9,13 +11,13 @@ import ErrorMessage from '../components/common/ErrorMessage'
 export default function ReservationFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const user = JSON.parse(localStorage.getItem('user') || 'null')
+  const { user } = useAuth()
 
   const [space, setSpace] = useState(null)
   const [spaceLoading, setSpaceLoading] = useState(true)
   const [spaceError, setSpaceError] = useState('')
 
-  const [form, setForm] = useState({ date: '', startTime: '', endTime: '', purpose: '' })
+  const [form, setForm] = useState({ date: '', startTime: '', endTime: '', purpose: '', attendeeCount: '' })
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
@@ -44,6 +46,9 @@ export default function ReservationFormPage() {
     if (!form.endTime) errs.endTime = 'La hora de fin es requerida'
     else if (form.endTime <= form.startTime) errs.endTime = 'La hora de fin debe ser mayor a la de inicio'
     if (!form.purpose.trim()) errs.purpose = 'El motivo es requerido'
+    if (!form.attendeeCount || parseInt(form.attendeeCount) < 1) errs.attendeeCount = 'Indica al menos 1 asistente'
+    else if (space && parseInt(form.attendeeCount) > space.capacity)
+      errs.attendeeCount = `Máximo ${space.capacity} personas para este espacio`
     return errs
   }
 
@@ -63,22 +68,25 @@ export default function ReservationFormPage() {
     setSubmitting(true)
     setSubmitError('')
     try {
+      // userId is derived from JWT on server side — only send the space + time data
       await createReservation({
         spaceId: parseInt(id),
-        spaceName: space.name,
-        userId: user.id,
-        ...form,
+        date: form.date,
+        startTime: form.startTime,
+        endTime: form.endTime,
+        purpose: form.purpose,
+        attendeeCount: parseInt(form.attendeeCount),
       })
       setSuccess(true)
       setTimeout(() => navigate('/my-reservations'), 2500)
-    } catch {
-      setSubmitError('No se pudo crear la reserva. Inténtalo nuevamente.')
+    } catch (err) {
+      setSubmitError(err.message || 'No se pudo crear la reserva. Inténtalo nuevamente.')
     } finally {
       setSubmitting(false)
     }
   }
 
-  const isFormValid = form.date && form.startTime && form.endTime && form.purpose.trim()
+  const isFormValid = form.date && form.startTime && form.endTime && form.purpose.trim() && form.attendeeCount
 
   if (spaceLoading) {
     return (
@@ -102,13 +110,14 @@ export default function ReservationFormPage() {
   if (success) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-20 text-center" role="status">
-        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5">
-          <svg className="w-10 h-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        <div className="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-5">
+          <svg className="w-10 h-10 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Reserva confirmada!</h2>
-        <p className="text-gray-500 text-sm">Redirigiendo a tus reservas en unos segundos...</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Reserva enviada!</h2>
+        <p className="text-gray-500 text-sm">Tu solicitud está pendiente de aprobación por un administrador.</p>
+        <p className="text-gray-400 text-xs mt-1">Redirigiendo a tus reservas en unos segundos...</p>
       </div>
     )
   }
@@ -137,17 +146,25 @@ export default function ReservationFormPage() {
 
       {/* Space summary */}
       <div className="bg-teal-50 rounded-xl p-4 mb-6 flex items-center gap-4 border border-teal-100">
-        <img
-          src={space?.image}
-          alt={space?.name}
-          className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-        />
+        <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${getSpaceConfig(space?.type).gradient}`}>
+          <svg className="w-6 h-6 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={getSpaceConfig(space?.type).icon} />
+          </svg>
+        </div>
         <div>
           <p className="font-semibold text-gray-900">{space?.name}</p>
           <p className="text-sm text-gray-500">
-            {space?.location} · {space?.capacity} personas
+            {space?.building} · {space?.capacity} personas
           </p>
         </div>
+      </div>
+
+      {/* Approval notice */}
+      <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-5 text-sm text-amber-800">
+        <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z" />
+        </svg>
+        Las reservas quedan <strong className="mx-1">pendientes de aprobación</strong> por un administrador o staff.
       </div>
 
       {submitError && <ErrorMessage message={submitError} className="mb-4" />}
@@ -226,6 +243,33 @@ export default function ReservationFormPage() {
           </div>
         </div>
 
+        {/* Attendee count */}
+        <div>
+          <label htmlFor="attendeeCount" className="block text-sm font-medium text-gray-700 mb-1">
+            Cantidad de asistentes <span className="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="attendeeCount"
+            type="number"
+            name="attendeeCount"
+            value={form.attendeeCount}
+            onChange={handleChange}
+            min={1}
+            max={space?.capacity ?? 999}
+            placeholder={space ? `Máximo ${space.capacity}` : ''}
+            aria-invalid={!!errors.attendeeCount}
+            aria-describedby={errors.attendeeCount ? 'attendeeCount-error' : undefined}
+            className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 ${
+              errors.attendeeCount ? 'border-red-400 bg-red-50' : 'border-gray-300'
+            }`}
+          />
+          {errors.attendeeCount && (
+            <p id="attendeeCount-error" className="mt-1 text-xs text-red-600" role="alert">
+              {errors.attendeeCount}
+            </p>
+          )}
+        </div>
+
         {/* Purpose */}
         <div>
           <label htmlFor="purpose" className="block text-sm font-medium text-gray-700 mb-1">
@@ -259,10 +303,10 @@ export default function ReservationFormPage() {
             {submitting ? (
               <>
                 <Spinner size="sm" className="mr-2" />
-                Reservando...
+                Enviando...
               </>
             ) : (
-              'Confirmar reserva'
+              'Enviar solicitud'
             )}
           </Button>
         </div>

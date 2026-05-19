@@ -1,15 +1,17 @@
-import spacesData from '../data/spaces.json'
+import { http } from '../lib/http'
 
-const delay = (ms) => new Promise((res) => setTimeout(res, ms))
-
-export async function getSpaces() {
-  await delay(600)
-  return spacesData
+export function getSpaces() {
+  return http.get('/spaces')
 }
 
-export async function getSpaceById(id) {
-  await delay(400)
-  const space = spacesData.find((s) => s.id === parseInt(id))
-  if (!space) throw new Error('Espacio no encontrado.')
-  return space
+export function getSpaceById(id) {
+  return http.get(`/spaces/${id}`)
+}
+
+/**
+ * Weekly availability view.
+ * @param {string} weekStart - ISO date string (YYYY-MM-DD) for the Monday of the week
+ */
+export function getSpacesAvailability(weekStart) {
+  return http.get(`/spaces/availability?weekStart=${weekStart}`)
 }

@@ -1,31 +1,25 @@
 ﻿import { useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Button from './common/Button'
+import { getSpaceConfig } from '../utils/spaceImages'
 
 export default function SpaceCard({ space }) {
   const navigate = useNavigate()
 
+  const resources = space.resources ?? []
+  const config = getSpaceConfig(space.type)
+
   return (
     <article className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col">
-      <div className="relative">
-        <img
-          src={space.image}
-          alt={`Imagen de ${space.name}`}
-          className="w-full h-48 object-cover"
-          loading="lazy"
-        />
-        <span
-          className={`absolute top-3 right-3 px-2.5 py-1 rounded-full text-xs font-semibold ${
-            space.available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-          }`}
-        >
-          {space.available ? 'Disponible' : 'No disponible'}
-        </span>
+      <div className={`h-36 bg-gradient-to-br ${config.gradient} flex items-center justify-center`}>
+        <svg className="w-14 h-14 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={config.icon} />
+        </svg>
       </div>
 
       <div className="p-5 flex flex-col flex-1">
         <h3 className="font-semibold text-gray-900 text-lg mb-0.5">{space.name}</h3>
-        <p className="text-sm text-gray-400 mb-3">{space.location}</p>
+        <p className="text-sm text-gray-400 mb-3">{space.building}</p>
 
         <div className="flex items-center gap-4 mb-3 text-sm text-gray-600">
           <span className="flex items-center gap-1.5">
@@ -38,24 +32,25 @@ export default function SpaceCard({ space }) {
             <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
             </svg>
-            {space.type}
+            {config.label}
           </span>
         </div>
 
-        <div className="flex flex-wrap gap-1.5 mb-4 flex-1">
-          {space.amenities.map((amenity) => (
-            <span key={amenity} className="px-2 py-0.5 bg-teal-50 text-teal-700 rounded-md text-xs font-medium">
-              {amenity}
-            </span>
-          ))}
-        </div>
+        {resources.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-4 flex-1">
+            {resources.map((resource) => (
+              <span key={resource} className="px-2 py-0.5 bg-teal-50 text-teal-700 rounded-md text-xs font-medium">
+                {resource}
+              </span>
+            ))}
+          </div>
+        )}
 
         <Button
           onClick={() => navigate(`/spaces/${space.id}/reserve`)}
-          disabled={!space.available}
           className="w-full mt-auto"
         >
-          {space.available ? 'Reservar espacio' : 'No disponible'}
+          Reservar espacio
         </Button>
       </div>
     </article>
@@ -67,10 +62,8 @@ SpaceCard.propTypes = {
     id: PropTypes.number.isRequired,
     name: PropTypes.string.isRequired,
     capacity: PropTypes.number.isRequired,
-    location: PropTypes.string.isRequired,
+    building: PropTypes.string.isRequired,
     type: PropTypes.string.isRequired,
-    amenities: PropTypes.arrayOf(PropTypes.string).isRequired,
-    image: PropTypes.string.isRequired,
-    available: PropTypes.bool.isRequired,
+    resources: PropTypes.arrayOf(PropTypes.string),
   }).isRequired,
 }

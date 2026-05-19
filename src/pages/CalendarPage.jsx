@@ -1,6 +1,8 @@
 ﻿import { useState, useEffect } from 'react'
-import { getReservationsByUser } from '../api/reservations'
+import { useAuth } from '../context/AuthContext'
+import { getMyReservations } from '../api/reservations'
 import Spinner from '../components/common/Spinner'
+import EmptyState from '../components/common/EmptyState'
 import ErrorMessage from '../components/common/ErrorMessage'
 import Button from '../components/common/Button'
 
@@ -32,8 +34,11 @@ function toDateStr(date) {
   return date.toISOString().split('T')[0]
 }
 
+// Show reservations that are pending or approved (exclude cancelled/rejected/no-show)
+const VISIBLE_STATUSES = new Set(['pending', 'approved'])
+
 export default function CalendarPage() {
-  const user = JSON.parse(localStorage.getItem('user') || 'null')
+  const { user } = useAuth()
   const [weekOffset, setWeekOffset] = useState(0)
   const [reservations, setReservations] = useState([])
   const [loading, setLoading] = useState(true)
@@ -48,8 +53,8 @@ export default function CalendarPage() {
     setLoading(true)
     setError('')
     try {
-      const data = await getReservationsByUser(user.id)
-      setReservations(data.filter((r) => r.status !== 'cancelled'))
+      const data = await getMyReservations()
+      setReservations(data.filter((r) => VISIBLE_STATUSES.has(r.status)))
     } catch {
       setError('No se pudieron cargar las reservas.')
     } finally {
@@ -74,6 +79,10 @@ export default function CalendarPage() {
   const isToday = (date) => toDateStr(date) === toDateStr(today)
 
   const weekLabel = `${weekDates[0].getDate()} – ${weekDates[6].getDate()} ${weekDates[6].toLocaleDateString('es-CL', { month: 'long', year: 'numeric' })}`
+
+  const weekHasReservations = weekDates.some((date) =>
+    reservations.some((r) => r.date === toDateStr(date))
+  )
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
@@ -108,6 +117,11 @@ export default function CalendarPage() {
         </div>
       ) : error ? (
         <ErrorMessage message={error} onRetry={fetchReservations} />
+      ) : !weekHasReservations ? (
+        <EmptyState
+          title="Sin reservas esta semana"
+          description="No tienes reservas pendientes ni aprobadas para los días mostrados."
+        />
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
           <table
@@ -118,9 +132,9 @@ export default function CalendarPage() {
             <thead>
               <tr>
                 <th className="w-14 py-3 border-b border-r border-gray-100 bg-gray-50" aria-label="Hora" />
-                {weekDates.map((date, i) => (
+                {weekDates.map((date) => (
                   <th
-                    key={i}
+                    key={toDateStr(date)}
                     scope="col"
                     className="py-3 px-2 border-b border-r last:border-r-0 border-gray-100 bg-gray-50 text-center min-w-[90px]"
                   >
@@ -129,7 +143,7 @@ export default function CalendarPage() {
                         isToday(date) ? 'text-teal-600' : 'text-gray-400'
                       }`}
                     >
-                      {DAY_NAMES[i]}
+                      {DAY_NAMES[weekDates.indexOf(date)]}
                     </p>
                     <p
                       className={`text-xl font-bold mt-0.5 w-9 h-9 flex items-center justify-center mx-auto rounded-full ${
@@ -148,11 +162,11 @@ export default function CalendarPage() {
                   <td className="py-2 px-2 border-r border-gray-100 text-xs text-gray-400 text-right bg-gray-50 font-mono align-top pt-3">
                     {hour}:00
                   </td>
-                  {weekDates.map((date, i) => {
+                  {weekDates.map((date) => {
                     const slots = getReservationsForSlot(date, hour)
                     return (
                       <td
-                        key={i}
+                        key={`${toDateStr(date)}-${hour}`}
                         className={`border-r last:border-r-0 border-gray-100 p-1 h-14 align-top ${
                           isToday(date) ? 'bg-teal-50/40' : ''
                         }`}
@@ -161,7 +175,7 @@ export default function CalendarPage() {
                           <div
                             key={r.id}
                             className={`text-xs rounded-md px-1.5 py-1 border font-medium truncate mb-0.5 ${COLORS[ri % COLORS.length]}`}
-                            title={`${r.spaceName}: ${r.startTime}–${r.endTime} | ${r.purpose}`}
+                            title={`${r.spaceName}: ${r.startTime}–${r.endTime} | ${r.purpose} (${r.status})`}
                           >
                             {r.spaceName}
                           </div>
@@ -177,7 +191,7 @@ export default function CalendarPage() {
       )}
 
       {/* Legend */}
-      {!loading && !error && reservations.length > 0 && (
+      {!loading && !error && weekHasReservations && (
         <p className="mt-3 text-xs text-gray-400 text-center">
           Pasa el cursor sobre un bloque para ver los detalles de la reserva
         </p>

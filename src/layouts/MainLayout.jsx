@@ -1,19 +1,29 @@
 ﻿import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
-const navLinks = [
+const BASE_LINKS = [
   { to: '/spaces', label: 'Espacios' },
   { to: '/calendar', label: 'Calendario' },
   { to: '/my-reservations', label: 'Mis Reservas' },
 ]
 
+const ADMIN_LINKS = [
+  { to: '/admin/reservations', label: 'Aprobar Reservas' },
+]
+
+const ADMIN_ROLES = ['Admin', 'Staff']
+
 export default function MainLayout() {
   const navigate = useNavigate()
-  const user = JSON.parse(localStorage.getItem('user') || 'null')
+  const { user, clearSession } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
 
+  const isAdmin = (user?.roles ?? []).some((r) => ADMIN_ROLES.includes(r))
+  const navLinks = isAdmin ? [...BASE_LINKS, ...ADMIN_LINKS] : BASE_LINKS
+
   const handleLogout = () => {
-    localStorage.removeItem('user')
+    clearSession()
     navigate('/login')
   }
 
@@ -54,7 +64,7 @@ export default function MainLayout() {
             {/* User + Logout */}
             <div className="flex items-center gap-3">
               <span className="hidden sm:block text-sm text-gray-600 max-w-[150px] truncate">
-                {user?.name}
+                {user?.name ?? user?.email}
               </span>
               <button
                 onClick={handleLogout}

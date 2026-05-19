@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getReservationsByUser, cancelReservation } from '../api/reservations'
+import { getMyReservations, cancelReservation } from '../api/reservations'
 import ReservationCard from '../components/ReservationCard'
 import Spinner from '../components/common/Spinner'
 import EmptyState from '../components/common/EmptyState'
@@ -9,13 +9,22 @@ import Button from '../components/common/Button'
 
 const TABS = [
   { value: 'all', label: 'Todas' },
-  { value: 'confirmed', label: 'Confirmadas' },
+  { value: 'pending', label: 'Pendientes' },
+  { value: 'approved', label: 'Aprobadas' },
+  { value: 'rejected', label: 'Rechazadas' },
   { value: 'cancelled', label: 'Canceladas' },
 ]
 
+const TAB_EMPTY_LABELS = {
+  all: 'Aún no has hecho ninguna reserva.',
+  pending: 'No tienes reservas pendientes de aprobación.',
+  approved: 'No tienes reservas aprobadas.',
+  rejected: 'No tienes reservas rechazadas.',
+  cancelled: 'No tienes reservas canceladas.',
+}
+
 export default function MyReservationsPage() {
   const navigate = useNavigate()
-  const user = JSON.parse(localStorage.getItem('user') || 'null')
 
   const [reservations, setReservations] = useState([])
   const [loading, setLoading] = useState(true)
@@ -27,7 +36,7 @@ export default function MyReservationsPage() {
     setLoading(true)
     setError('')
     try {
-      const data = await getReservationsByUser(user.id)
+      const data = await getMyReservations()
       setReservations(data)
     } catch {
       setError('No se pudieron cargar tus reservas. Por favor intenta nuevamente.')
@@ -67,7 +76,7 @@ export default function MyReservationsPage() {
       </header>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-6 w-fit" role="tablist">
+      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-6 flex-wrap" role="tablist">
         {TABS.map((tab) => (
           <button
             key={tab.value}
@@ -97,13 +106,11 @@ export default function MyReservationsPage() {
       ) : filteredReservations.length === 0 ? (
         <EmptyState
           title="No tienes reservas"
-          description={
-            activeTab === 'all'
-              ? 'Aún no has hecho ninguna reserva.'
-              : `No tienes reservas ${activeTab === 'confirmed' ? 'confirmadas' : 'canceladas'}.`
-          }
+          description={TAB_EMPTY_LABELS[activeTab]}
           action={
-            <Button onClick={() => navigate('/spaces')}>Explorar espacios</Button>
+            activeTab === 'all' && (
+              <Button onClick={() => navigate('/spaces')}>Explorar espacios</Button>
+            )
           }
         />
       ) : (

@@ -1,25 +1,31 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { login } from '../api/auth'
+import { register } from '../api/auth'
 import { useAuth } from '../context/AuthContext'
 import Button from '../components/common/Button'
 import Spinner from '../components/common/Spinner'
 import ErrorMessage from '../components/common/ErrorMessage'
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const navigate = useNavigate()
   const { saveSession } = useAuth()
-  const [form, setForm] = useState({ email: '', password: '' })
+  const [form, setForm] = useState({ fullName: '', email: '', password: '', confirmPassword: '' })
   const [errors, setErrors] = useState({})
   const [apiError, setApiError] = useState('')
   const [loading, setLoading] = useState(false)
 
   const validate = () => {
     const errs = {}
+    if (!form.fullName.trim()) errs.fullName = 'El nombre es requerido'
     if (!form.email) errs.email = 'El correo es requerido'
     else if (!/\S+@\S+\.\S+/.test(form.email)) errs.email = 'Ingresa un correo válido'
     if (!form.password) errs.password = 'La contraseña es requerida'
-    else if (form.password.length < 6) errs.password = 'Mínimo 6 caracteres'
+    else if (form.password.length < 8) errs.password = 'Mínimo 8 caracteres'
+    else if (!/[A-Z]/.test(form.password)) errs.password = 'Debe contener al menos una mayúscula'
+    else if (!/[0-9]/.test(form.password)) errs.password = 'Debe contener al menos un número'
+    else if (!/[^a-zA-Z0-9]/.test(form.password)) errs.password = 'Debe contener al menos un carácter especial (!@#$...)'
+    if (!form.confirmPassword) errs.confirmPassword = 'Confirma tu contraseña'
+    else if (form.password !== form.confirmPassword) errs.confirmPassword = 'Las contraseñas no coinciden'
     return errs
   }
 
@@ -39,17 +45,21 @@ export default function LoginPage() {
     setLoading(true)
     setApiError('')
     try {
-      const { token, user } = await login(form.email, form.password)
+      const { token, user } = await register({
+        email: form.email,
+        password: form.password,
+        fullName: form.fullName.trim(),
+      })
       saveSession(user, token)
       navigate('/spaces')
     } catch (err) {
-      setApiError(err.message)
+      setApiError(err.message || 'No se pudo crear la cuenta. Inténtalo de nuevo.')
     } finally {
       setLoading(false)
     }
   }
 
-  const isFormValid = form.email && form.password
+  const isFormValid = form.fullName && form.email && form.password && form.confirmPassword
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center p-4">
@@ -62,12 +72,38 @@ export default function LoginPage() {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">SalaFinder</h1>
-          <p className="text-gray-500 mt-1 text-sm">Inicia sesión para continuar</p>
+          <p className="text-gray-500 mt-1 text-sm">Crea tu cuenta para reservar espacios</p>
         </div>
 
         {apiError && <ErrorMessage message={apiError} className="mb-4" />}
 
         <form onSubmit={handleSubmit} noValidate>
+          {/* Full Name */}
+          <div className="mb-4">
+            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
+              Nombre completo
+            </label>
+            <input
+              id="fullName"
+              type="text"
+              name="fullName"
+              value={form.fullName}
+              onChange={handleChange}
+              placeholder="Juan Pérez"
+              autoComplete="name"
+              aria-invalid={!!errors.fullName}
+              aria-describedby={errors.fullName ? 'fullName-error' : undefined}
+              className={`w-full px-4 py-2.5 rounded-lg border text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 ${
+                errors.fullName ? 'border-red-400 bg-red-50' : 'border-gray-300 focus:border-teal-500'
+              }`}
+            />
+            {errors.fullName && (
+              <p id="fullName-error" className="mt-1 text-xs text-red-600" role="alert">
+                {errors.fullName}
+              </p>
+            )}
+          </div>
+
           {/* Email */}
           <div className="mb-4">
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
@@ -81,8 +117,8 @@ export default function LoginPage() {
               onChange={handleChange}
               placeholder="correo@ejemplo.com"
               autoComplete="email"
-              aria-describedby={errors.email ? 'email-error' : undefined}
               aria-invalid={!!errors.email}
+              aria-describedby={errors.email ? 'email-error' : undefined}
               className={`w-full px-4 py-2.5 rounded-lg border text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 ${
                 errors.email ? 'border-red-400 bg-red-50' : 'border-gray-300 focus:border-teal-500'
               }`}
@@ -95,7 +131,7 @@ export default function LoginPage() {
           </div>
 
           {/* Password */}
-          <div className="mb-6">
+          <div className="mb-4">
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
               Contraseña
             </label>
@@ -106,9 +142,9 @@ export default function LoginPage() {
               value={form.password}
               onChange={handleChange}
               placeholder="••••••••"
-              autoComplete="current-password"
-              aria-describedby={errors.password ? 'password-error' : undefined}
+              autoComplete="new-password"
               aria-invalid={!!errors.password}
+              aria-describedby={errors.password ? 'password-error' : undefined}
               className={`w-full px-4 py-2.5 rounded-lg border text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 ${
                 errors.password ? 'border-red-400 bg-red-50' : 'border-gray-300 focus:border-teal-500'
               }`}
@@ -118,18 +154,45 @@ export default function LoginPage() {
                 {errors.password}
               </p>
             )}
+            <p className="mt-1 text-xs text-gray-400">Mínimo 8 caracteres, una mayúscula, un número y un carácter especial</p>
+          </div>
+
+          {/* Confirm Password */}
+          <div className="mb-6">
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+              Confirmar contraseña
+            </label>
+            <input
+              id="confirmPassword"
+              type="password"
+              name="confirmPassword"
+              value={form.confirmPassword}
+              onChange={handleChange}
+              placeholder="••••••••"
+              autoComplete="new-password"
+              aria-invalid={!!errors.confirmPassword}
+              aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
+              className={`w-full px-4 py-2.5 rounded-lg border text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 ${
+                errors.confirmPassword ? 'border-red-400 bg-red-50' : 'border-gray-300 focus:border-teal-500'
+              }`}
+            />
+            {errors.confirmPassword && (
+              <p id="confirmPassword-error" className="mt-1 text-xs text-red-600" role="alert">
+                {errors.confirmPassword}
+              </p>
+            )}
           </div>
 
           <Button type="submit" disabled={!isFormValid || loading} className="w-full">
             {loading && <Spinner size="sm" className="mr-2" />}
-            {loading ? 'Ingresando...' : 'Iniciar sesión'}
+            {loading ? 'Creando cuenta...' : 'Crear cuenta'}
           </Button>
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-500">
-          ¿No tienes cuenta?{' '}
-          <Link to="/register" className="text-teal-600 font-medium hover:text-teal-700 transition-colors">
-            Crea una aquí
+          ¿Ya tienes cuenta?{' '}
+          <Link to="/login" className="text-teal-600 font-medium hover:text-teal-700 transition-colors">
+            Inicia sesión
           </Link>
         </p>
       </div>

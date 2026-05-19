@@ -2,13 +2,18 @@ import PropTypes from 'prop-types'
 import Button from './common/Button'
 
 const statusConfig = {
-  confirmed: { label: 'Confirmada', className: 'bg-green-100 text-green-700' },
-  cancelled: { label: 'Cancelada', className: 'bg-red-100 text-red-700' },
-  pending: { label: 'Pendiente', className: 'bg-yellow-100 text-yellow-700' },
+  pending:   { label: 'Pendiente',    className: 'bg-yellow-100 text-yellow-700' },
+  approved:  { label: 'Aprobada',     className: 'bg-green-100 text-green-700' },
+  rejected:  { label: 'Rechazada',    className: 'bg-red-100 text-red-700' },
+  cancelled: { label: 'Cancelada',    className: 'bg-gray-100 text-gray-500' },
+  'no-show': { label: 'No presentado', className: 'bg-orange-100 text-orange-700' },
 }
 
+// A reservation can only be cancelled while it is pending or approved
+const CANCELLABLE_STATUSES = new Set(['pending', 'approved'])
+
 export default function ReservationCard({ reservation, onCancel }) {
-  const status = statusConfig[reservation.status] || statusConfig.pending
+  const status = statusConfig[reservation.status] ?? statusConfig.pending
 
   const formattedDate = new Date(reservation.date + 'T12:00:00').toLocaleDateString('es-CL', {
     weekday: 'long',
@@ -49,7 +54,7 @@ export default function ReservationCard({ reservation, onCancel }) {
         )}
       </div>
 
-      {reservation.status === 'confirmed' && onCancel && (
+      {CANCELLABLE_STATUSES.has(reservation.status) && onCancel && (
         <Button
           variant="danger"
           size="sm"
@@ -70,7 +75,7 @@ ReservationCard.propTypes = {
     date: PropTypes.string.isRequired,
     startTime: PropTypes.string.isRequired,
     endTime: PropTypes.string.isRequired,
-    status: PropTypes.oneOf(['confirmed', 'cancelled', 'pending']).isRequired,
+    status: PropTypes.oneOf(['pending', 'approved', 'rejected', 'cancelled', 'no-show']).isRequired,
     purpose: PropTypes.string,
   }).isRequired,
   onCancel: PropTypes.func,

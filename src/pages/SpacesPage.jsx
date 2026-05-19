@@ -12,7 +12,6 @@ export default function SpacesPage() {
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [filterCapacity, setFilterCapacity] = useState('all')
-  const [filterAvailable, setFilterAvailable] = useState(false)
 
   const fetchSpaces = async () => {
     setLoading(true)
@@ -32,10 +31,11 @@ export default function SpacesPage() {
   }, [])
 
   const filteredSpaces = spaces.filter((space) => {
+    const q = search.toLowerCase()
     const matchesSearch =
-      space.name.toLowerCase().includes(search.toLowerCase()) ||
-      space.location.toLowerCase().includes(search.toLowerCase()) ||
-      space.type.toLowerCase().includes(search.toLowerCase())
+      space.name.toLowerCase().includes(q) ||
+      (space.building ?? '').toLowerCase().includes(q) ||
+      space.type.toLowerCase().includes(q)
 
     const matchesCapacity =
       filterCapacity === 'all' ||
@@ -43,9 +43,7 @@ export default function SpacesPage() {
       (filterCapacity === 'medium' && space.capacity > 8 && space.capacity <= 20) ||
       (filterCapacity === 'large' && space.capacity > 20)
 
-    const matchesAvailable = !filterAvailable || space.available
-
-    return matchesSearch && matchesCapacity && matchesAvailable
+    return matchesSearch && matchesCapacity
   })
 
   return (
@@ -94,16 +92,6 @@ export default function SpacesPage() {
           <option value="large">Grande (más de 20)</option>
         </select>
 
-        {/* Available only toggle */}
-        <label className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg text-sm bg-white cursor-pointer hover:bg-gray-50 select-none">
-          <input
-            type="checkbox"
-            checked={filterAvailable}
-            onChange={(e) => setFilterAvailable(e.target.checked)}
-            className="rounded text-teal-600 focus:ring-teal-500"
-          />
-          Solo disponibles
-        </label>
       </div>
 
       {/* Content */}
@@ -125,7 +113,7 @@ export default function SpacesPage() {
               : 'No hay espacios que coincidan con los filtros seleccionados.'
           }
           action={
-            <Button variant="secondary" onClick={() => { setSearch(''); setFilterCapacity('all'); setFilterAvailable(false) }}>
+            <Button variant="secondary" onClick={() => { setSearch(''); setFilterCapacity('all') }}>
               Limpiar filtros
             </Button>
           }
@@ -133,8 +121,7 @@ export default function SpacesPage() {
       ) : (
         <>
           <p className="text-sm text-gray-400 mb-4">
-            {filteredSpaces.length} espacio{filteredSpaces.length !== 1 ? 's' : ''} encontrado
-            {filteredSpaces.length !== 1 ? 's' : ''}
+            {filteredSpaces.length === 1 ? '1 espacio encontrado' : `${filteredSpaces.length} espacios encontrados`}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredSpaces.map((space) => (

@@ -1,16 +1,23 @@
-import users from '../data/users.json'
+import { http } from '../lib/http'
 
-const delay = (ms) => new Promise((res) => setTimeout(res, ms))
-
+/**
+ * Login against the real backend.
+ * 1. POST /auth/login → get JWT token
+ * 2. GET  /auth/me    → get full user profile (includes role, NoShowCount, etc.)
+ * Returns { token, user }
+ */
 export async function login(email, password) {
-  await delay(800)
-  const user = users.find((u) => u.email === email && u.password === password)
-  if (!user) throw new Error('Credenciales inválidas. Verifica tu correo y contraseña.')
-  const { password: _, ...userWithoutPassword } = user
-  return { user: userWithoutPassword, token: 'mock-token-salafinder' }
+  const { token } = await http.post('/auth/login', { email, password })
+  localStorage.setItem('token', token)
+  const user = await http.get('/auth/me')
+  return { token, user }
 }
 
-export async function logout() {
-  await delay(300)
-  return { success: true }
+/**
+ * Register a new user then auto-login.
+ * Returns { token, user }
+ */
+export async function register({ email, password, fullName }) {
+  await http.post('/auth/register', { email, password, fullName, role: 'Student' })
+  return login(email, password)
 }
