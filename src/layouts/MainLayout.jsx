@@ -1,6 +1,7 @@
-﻿import { useState } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import BlockedNotice from '../components/BlockedNotice'
 
 const BASE_LINKS = [
   { to: '/spaces', label: 'Espacios' },
@@ -8,19 +9,35 @@ const BASE_LINKS = [
   { to: '/my-reservations', label: 'Mis Reservas' },
 ]
 
-const ADMIN_LINKS = [
-  { to: '/admin/reservations', label: 'Aprobar Reservas' },
+const STAFF_LINKS = [
+  { to: '/admin/reservations', label: 'Aprobar' },
+  { to: '/admin/no-show', label: 'No-show' },
 ]
 
-const ADMIN_ROLES = ['Admin', 'Staff']
+const ADMIN_ONLY_LINKS = [
+  { to: '/admin/spaces', label: 'Espacios' },
+  { to: '/admin/audit', label: 'Auditoría' },
+]
+
+const STAFF_ROLES = ['Admin', 'Staff']
 
 export default function MainLayout() {
   const navigate = useNavigate()
-  const { user, clearSession } = useAuth()
+  const { user, clearSession, refreshUser } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const isAdmin = (user?.roles ?? []).some((r) => ADMIN_ROLES.includes(r))
-  const navLinks = isAdmin ? [...BASE_LINKS, ...ADMIN_LINKS] : BASE_LINKS
+  useEffect(() => {
+    refreshUser()
+  }, [refreshUser])
+
+  const roles = user?.roles ?? []
+  const isStaff = roles.some((r) => STAFF_ROLES.includes(r))
+  const isAdmin = roles.includes('Admin')
+  const navLinks = [
+    ...BASE_LINKS,
+    ...(isStaff ? STAFF_LINKS : []),
+    ...(isAdmin ? ADMIN_ONLY_LINKS : []),
+  ]
 
   const handleLogout = () => {
     clearSession()
@@ -64,7 +81,7 @@ export default function MainLayout() {
             {/* User + Logout */}
             <div className="flex items-center gap-3">
               <span className="hidden sm:block text-sm text-gray-600 max-w-[150px] truncate">
-                {user?.name ?? user?.email}
+                {user?.name ?? user?.fullName ?? user?.email}
               </span>
               <button
                 onClick={handleLogout}
@@ -112,6 +129,8 @@ export default function MainLayout() {
           )}
         </div>
       </header>
+
+      <BlockedNotice user={user} variant="banner" />
 
       <main id="main-content" tabIndex={-1}>
         <Outlet />

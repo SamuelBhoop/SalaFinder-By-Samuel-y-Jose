@@ -11,6 +11,9 @@ import CalendarPage from './pages/CalendarPage'
 import ReservationFormPage from './pages/ReservationFormPage'
 import MyReservationsPage from './pages/MyReservationsPage'
 import AdminReservationsPage from './pages/AdminReservationsPage'
+import AdminNoShowPage from './pages/AdminNoShowPage'
+import AdminSpacesPage from './pages/AdminSpacesPage'
+import AdminAuditPage from './pages/AdminAuditPage'
 
 export default function App() {
   return (
@@ -41,6 +44,30 @@ export default function App() {
               element={
                 <RoleRoute roles={['Admin', 'Staff']}>
                   <AdminReservationsPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/no-show"
+              element={
+                <RoleRoute roles={['Admin', 'Staff']}>
+                  <AdminNoShowPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/spaces"
+              element={
+                <RoleRoute roles={['Admin']}>
+                  <AdminSpacesPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/audit"
+              element={
+                <RoleRoute roles={['Admin']}>
+                  <AdminAuditPage />
                 </RoleRoute>
               }
             />

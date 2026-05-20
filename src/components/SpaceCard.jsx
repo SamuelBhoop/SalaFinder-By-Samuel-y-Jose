@@ -1,10 +1,13 @@
 ﻿import { useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
+import { useAuth } from '../context/AuthContext'
 import Button from './common/Button'
 import { getSpaceConfig } from '../utils/spaceImages'
 
 export default function SpaceCard({ space }) {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const isBlocked = Boolean(user?.isBlocked)
 
   const resources = space.resources ?? []
   const config = getSpaceConfig(space.type)
@@ -49,8 +52,14 @@ export default function SpaceCard({ space }) {
         <Button
           onClick={() => navigate(`/spaces/${space.id}/reserve`)}
           className="w-full mt-auto"
+          disabled={isBlocked}
+          title={
+            isBlocked
+              ? 'Tu cuenta está bloqueada por no-show. No puedes crear reservas.'
+              : undefined
+          }
         >
-          Reservar espacio
+          {isBlocked ? 'Reservas suspendidas' : 'Reservar espacio'}
         </Button>
       </div>
     </article>

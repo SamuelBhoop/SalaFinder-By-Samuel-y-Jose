@@ -1,4 +1,10 @@
 import { http } from '../lib/http'
+import { normalizeUser } from '../utils/authUser'
+
+export async function getMe() {
+  const data = await http.get('/auth/me')
+  return normalizeUser(data)
+}
 
 /**
  * Login against the real backend.
@@ -9,7 +15,7 @@ import { http } from '../lib/http'
 export async function login(email, password) {
   const { token } = await http.post('/auth/login', { email, password })
   localStorage.setItem('token', token)
-  const user = await http.get('/auth/me')
+  const user = await getMe()
   return { token, user }
 }
 

@@ -15,3 +15,15 @@ export function getSpaceById(id) {
 export function getSpacesAvailability(weekStart) {
   return http.get(`/spaces/availability?weekStart=${weekStart}`)
 }
+
+export function createSpace(space) {
+  return http.post('/spaces', space)
+}
+
+export function updateSpace(id, space) {
+  return http.put(`/spaces/${id}`, space)
+}
+
+export function deleteSpace(id) {
+  return http.delete(`/spaces/${id}`)
+}

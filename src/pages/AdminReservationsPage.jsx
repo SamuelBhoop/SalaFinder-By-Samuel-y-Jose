@@ -117,7 +117,7 @@ export default function AdminReservationsPage() {
                   <div className="text-sm text-gray-500 space-y-0.5">
                     <p>
                       <span className="font-medium text-gray-700">Solicitante:</span>{' '}
-                      {r.user?.fullName ?? r.user?.email ?? r.userId}
+                      {r.userDisplayName}
                     </p>
                     <p>
                       <span className="font-medium text-gray-700">Fecha:</span> {r.date}

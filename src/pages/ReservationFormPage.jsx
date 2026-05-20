@@ -7,6 +7,7 @@ import { getSpaceConfig } from '../utils/spaceImages'
 import Button from '../components/common/Button'
 import Spinner from '../components/common/Spinner'
 import ErrorMessage from '../components/common/ErrorMessage'
+import BlockedNotice from '../components/BlockedNotice'
 
 export default function ReservationFormPage() {
   const { id } = useParams()
@@ -87,6 +88,19 @@ export default function ReservationFormPage() {
   }
 
   const isFormValid = form.date && form.startTime && form.endTime && form.purpose.trim() && form.attendeeCount
+
+  if (user?.isBlocked) {
+    return (
+      <section className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+        <BlockedNotice user={user} variant="full" />
+        <div className="text-center">
+          <Button variant="secondary" onClick={() => navigate('/spaces')}>
+            Volver a espacios
+          </Button>
+        </div>
+      </section>
+    )
+  }
 
   if (spaceLoading) {
     return (

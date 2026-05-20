@@ -43,7 +43,14 @@ export default function LoginPage() {
       saveSession(user, token)
       navigate('/spaces')
     } catch (err) {
-      setApiError(err.message)
+      const msg = err.message || ''
+      if (msg.toLowerCase().includes('bloqueado')) {
+        setApiError(
+          'Tu cuenta está bloqueada por acumular no-shows. No puedes iniciar sesión hasta que termine el período de suspensión.'
+        )
+      } else {
+        setApiError(msg || 'Credenciales incorrectas. Verifica tu correo y contraseña.')
+      }
     } finally {
       setLoading(false)
     }

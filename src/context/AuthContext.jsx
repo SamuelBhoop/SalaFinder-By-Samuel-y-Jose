@@ -1,10 +1,13 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect } from 'react'
+import { getMe } from '../api/auth'
+import { normalizeUser } from '../utils/authUser'
 
 const AuthContext = createContext(null)
 
 function loadUser() {
   try {
-    return JSON.parse(localStorage.getItem('user') || 'null')
+    const raw = JSON.parse(localStorage.getItem('user') || 'null')
+    return raw ? normalizeUser(raw) : null
   } catch {
     return null
   }
@@ -14,9 +17,10 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(loadUser)
 
   const saveSession = useCallback((userData, token) => {
+    const normalized = normalizeUser(userData) ?? userData
     localStorage.setItem('token', token)
-    localStorage.setItem('user', JSON.stringify(userData))
-    setUser(userData)
+    localStorage.setItem('user', JSON.stringify(normalized))
+    setUser(normalized)
   }, [])
 
   const clearSession = useCallback(() => {
@@ -25,8 +29,25 @@ export function AuthProvider({ children }) {
     setUser(null)
   }, [])
 
+  const refreshUser = useCallback(async () => {
+    if (!localStorage.getItem('token')) return
+    try {
+      const profile = await getMe()
+      localStorage.setItem('user', JSON.stringify(profile))
+      setUser(profile)
+    } catch {
+      // 401: http.js redirige a login
+    }
+  }, [])
+
+  useEffect(() => {
+    if (localStorage.getItem('token')) {
+      refreshUser()
+    }
+  }, [refreshUser])
+
   return (
-    <AuthContext.Provider value={{ user, saveSession, clearSession }}>
+    <AuthContext.Provider value={{ user, saveSession, clearSession, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

@@ -26,7 +26,7 @@ async function request(path, options = {}) {
     let message = `Error ${res.status}`
     try {
       const data = await res.json()
-      message = data.message || data.title || data.errors?.[0] || message
+      message = data.message || data.Message || data.title || data.errors?.[0] || message
     } catch {
       // response body wasn't JSON
     }
