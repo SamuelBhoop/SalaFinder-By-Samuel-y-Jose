@@ -15,7 +15,7 @@ const STAFF_LINKS = [
 ]
 
 const ADMIN_ONLY_LINKS = [
-  { to: '/admin/spaces', label: 'Espacios' },
+  { to: '/admin/spaces', label: 'Gestionar espacios' },
   { to: '/admin/audit', label: 'Auditoría' },
 ]
 
