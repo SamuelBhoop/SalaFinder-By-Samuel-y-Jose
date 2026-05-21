@@ -1,38 +1,88 @@
-# SalaFinder
+# SalaFinder — Frontend
 
-Aplicación web SPA para la **reserva de salas y espacios de trabajo**, desarrollada con React 19, Vite y Tailwind CSS v4.
+Cliente web (SPA) para **reserva de salas, laboratorios y canchas** en entornos universitarios. Consume la API REST del backend [SalaFinders](https://github.com/zhinfenix/SalaFinders).
 
----
-
-## Tecnologías utilizadas
-
-| Tecnología | Versión | Uso |
-|---|---|---|
-| React | 19 | UI y componentes |
-| Vite | 8 | Bundler y servidor de desarrollo |
-| Tailwind CSS | v4 | Estilos responsivos |
-| React Router | v7 | Navegación SPA |
-| PropTypes | 15 | Tipado de props |
+**Repositorio backend:** [zhinfenix/SalaFinders](https://github.com/zhinfenix/SalaFinders)  
+**Documentación completa:** [`DOCUMENTACION.md`](./DOCUMENTACION.md)
 
 ---
 
-## Instalación y ejecución
+## Stack
+
+| Tecnología | Uso |
+|------------|-----|
+| React 19 | UI y componentes |
+| Vite 8 | Dev server y build |
+| Tailwind CSS 4 | Estilos responsivos |
+| React Router 7 | Rutas y navegación SPA |
+
+---
+
+## Requisitos
+
+- Node.js 18+
+- API **SalaFinders** en ejecución (por defecto `http://localhost:5155`)
+
+---
+
+## Instalación y desarrollo
 
 ```bash
 npm install
+cp .env.example .env   # o crea .env manualmente
 npm run dev
 ```
 
-Abre `http://localhost:5173` en el navegador.
+Abre **http://localhost:5173** (o el puerto que indique Vite).
+
+### Variables de entorno
+
+| Variable | Valor en desarrollo |
+|----------|---------------------|
+| `VITE_API_URL` | `/api` (proxy Vite) |
+| `VITE_BACKEND_URL` | `http://localhost:5155` |
+
+El proxy en `vite.config.js` reenvía `/api` → `VITE_BACKEND_URL`.
+
+### Scripts
+
+| Comando | Descripción |
+|---------|-------------|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Build de producción |
+| `npm run preview` | Vista previa del build |
 
 ---
 
-## Credenciales de prueba
+## Usuarios de prueba
 
-| Usuario | Email | Contraseña |
-|---|---|---|
-| Carlos Mendoza | admin@salafinder.com | 123456 |
-| María López | maria@salafinder.com | 123456 |
+Requieren el backend con seed aplicado:
+
+| Email | Contraseña | Rol |
+|-------|------------|-----|
+| admin@salafinders.com | Admin123! | Admin |
+| staff@salafinders.com | Staff123! | Staff |
+| student1@salafinders.com | Student123! | Student |
+
+---
+
+## Funcionalidades
+
+- **Estudiante:** registro, login, catálogo de espacios, reservas, calendario, cancelación, carrera académica (`/profile/program`)
+- **Staff / Admin:** aprobar y rechazar reservas pendientes, marcar **no-show**
+- **Admin:** CRUD de espacios, consulta de **auditoría**
+- **Bloqueo por no-show:** banner, botones deshabilitados y mensajes si el usuario está bloqueado (2 no-shows → 7 días; lo aplica el backend)
+
+---
+
+## Rutas
+
+| Ruta | Acceso |
+|------|--------|
+| `/login`, `/register` | Público |
+| `/spaces`, `/spaces/:id/reserve`, `/my-reservations`, `/calendar`, `/profile/program` | Autenticado |
+| `/admin/reservations`, `/admin/no-show` | Admin, Staff |
+| `/admin/spaces`, `/admin/audit` | Solo Admin |
 
 ---
 
@@ -40,54 +90,37 @@ Abre `http://localhost:5173` en el navegador.
 
 ```
 src/
-├── api/                  # Servicios simulados (mock de fetch)
-│   ├── auth.js           # login / logout
-│   ├── spaces.js         # getSpaces / getSpaceById
-│   └── reservations.js   # getReservationsByUser / createReservation / cancelReservation
+├── api/                    # Cliente HTTP hacia el backend
+│   ├── auth.js
+│   ├── reservations.js
+│   ├── spaces.js
+│   └── audit.js
 ├── components/
-│   ├── common/           # Button, Spinner, EmptyState, ErrorMessage (con PropTypes)
-│   ├── SpaceCard.jsx     # Tarjeta de espacio (con PropTypes)
-│   └── ReservationCard.jsx # Tarjeta de reserva (con PropTypes)
-├── data/                 # JSONs locales (users, spaces, reservations)
-├── layouts/              # AuthLayout, MainLayout (nav + logout)
-├── pages/                # LoginPage, SpacesPage, ReservationFormPage,
-│                         # MyReservationsPage, CalendarPage
-└── App.jsx               # Rutas con React Router
+│   ├── common/             # Button, Spinner, EmptyState, ErrorMessage
+│   ├── BlockedNotice.jsx
+│   ├── ProtectedRoute.jsx
+│   ├── RoleRoute.jsx
+│   ├── SpaceCard.jsx
+│   └── ReservationCard.jsx
+├── context/
+│   └── AuthContext.jsx     # JWT, refreshUser, bloqueo
+├── layouts/
+│   ├── AuthLayout.jsx
+│   └── MainLayout.jsx
+├── lib/
+│   └── http.js             # fetch + Bearer + errores API
+├── pages/                  # Login, Register, Spaces, Admin*, etc.
+├── utils/
+│   ├── authUser.js
+│   └── spaceImages.js      # Iconos por tipo Room/Lab/Court
+├── App.jsx
+└── main.jsx
 ```
 
----
-
-## Criterios de evaluación cubiertos
-
-### ✅ HTML semántico
-Uso de `<section>`, `<header>`, `<article>`, `<nav>`, `<main>`, `<form>`, `<table>` con atributos ARIA (`aria-label`, `aria-invalid`, `aria-describedby`, `role="alert"`, `role="tab"`, `role="grid"`, etc.) y `<label htmlFor>` en todos los inputs.
-
-### ✅ Tailwind CSS — diseño responsive
-Clases responsivas (`sm:`, `md:`, `lg:`) en todas las páginas. Grid de 1/2/3 columnas según breakpoint. Menú hamburguesa en móvil.
-
-### ✅ Componentización React con PropTypes
-Componentes reutilizables con props definidas mediante `PropTypes`: `Button` (4 variantes, 3 tamaños), `SpaceCard`, `ReservationCard`, `Spinner`, `EmptyState`, `ErrorMessage`.
-
-### ✅ Manejo de estado con useState
-Cada página gestiona múltiples estados: datos, loading, error, formularios, filtros, tabs y confirmación de éxito.
-
-### ✅ React Router y navegación SPA
-`BrowserRouter` con `Routes` anidadas, `NavLink` con estado activo, `useParams` para rutas dinámicas (`/spaces/:id/reserve`), `useNavigate` para redirecciones y `ProtectedRoute` para rutas privadas.
-
-### ✅ Renderizado dinámico de listas
-`.map()` con `key` único en: tarjetas de espacios, tarjetas de reservas, amenidades, tabs, semana del calendario. Filtrado reactivo con `.filter()` por búsqueda, capacidad y disponibilidad.
-
-### ✅ Estructura de servicios API
-Carpeta `/api` con funciones `async` que simulan llamadas a backend con `delay()`. Retornan DTOs estructurados consumidos desde el JSON local.
+La carpeta `src/data/` contiene JSON de referencia; **la app en runtime usa la API**, no mocks.
 
 ---
 
-## Páginas
+## Autores
 
-| Ruta | Descripción | Protegida |
-|---|---|---|
-| `/login` | Formulario de autenticación con validación | No |
-| `/spaces` | Catálogo con búsqueda y filtros | Sí |
-| `/spaces/:id/reserve` | Formulario de reserva con validación | Sí |
-| `/my-reservations` | Lista de reservas con tabs y cancelación | Sí |
-| `/calendar` | Vista semanal tipo agenda | Sí |
+Samuel Bhoop y José — proyecto académico SalaFinder.
