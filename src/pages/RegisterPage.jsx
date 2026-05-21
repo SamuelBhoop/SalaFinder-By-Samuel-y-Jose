@@ -5,11 +5,18 @@ import { useAuth } from '../context/AuthContext'
 import Button from '../components/common/Button'
 import Spinner from '../components/common/Spinner'
 import ErrorMessage from '../components/common/ErrorMessage'
+import ProgramSelect from '../components/ProgramSelect'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
   const { saveSession } = useAuth()
-  const [form, setForm] = useState({ fullName: '', email: '', password: '', confirmPassword: '' })
+  const [form, setForm] = useState({
+    fullName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    program: '',
+  })
   const [errors, setErrors] = useState({})
   const [apiError, setApiError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -26,6 +33,7 @@ export default function RegisterPage() {
     else if (!/[^a-zA-Z0-9]/.test(form.password)) errs.password = 'Debe contener al menos un carácter especial (!@#$...)'
     if (!form.confirmPassword) errs.confirmPassword = 'Confirma tu contraseña'
     else if (form.password !== form.confirmPassword) errs.confirmPassword = 'Las contraseñas no coinciden'
+    if (!form.program) errs.program = 'Selecciona tu carrera'
     return errs
   }
 
@@ -49,6 +57,7 @@ export default function RegisterPage() {
         email: form.email,
         password: form.password,
         fullName: form.fullName.trim(),
+        program: form.program,
       })
       saveSession(user, token)
       navigate('/spaces')
@@ -59,7 +68,8 @@ export default function RegisterPage() {
     }
   }
 
-  const isFormValid = form.fullName && form.email && form.password && form.confirmPassword
+  const isFormValid =
+    form.fullName && form.email && form.password && form.confirmPassword && form.program
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center p-4">
@@ -155,6 +165,15 @@ export default function RegisterPage() {
               </p>
             )}
             <p className="mt-1 text-xs text-gray-400">Mínimo 8 caracteres, una mayúscula, un número y un carácter especial</p>
+          </div>
+
+          <div className="mb-4">
+            <ProgramSelect
+              value={form.program}
+              onChange={handleChange}
+              error={errors.program}
+              hint="Determina qué salas y laboratorios puedes reservar."
+            />
           </div>
 
           {/* Confirm Password */}

@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import BlockedNotice from '../components/BlockedNotice'
 
@@ -80,9 +80,19 @@ export default function MainLayout() {
 
             {/* User + Logout */}
             <div className="flex items-center gap-3">
-              <span className="hidden sm:block text-sm text-gray-600 max-w-[150px] truncate">
-                {user?.name ?? user?.fullName ?? user?.email}
-              </span>
+              <div className="hidden sm:block text-right max-w-[180px]">
+                <span className="block text-sm text-gray-600 truncate">
+                  {user?.name ?? user?.fullName ?? user?.email}
+                </span>
+                {user?.isStudent && user?.program && (
+                  <span className="block text-xs text-teal-600 truncate">{user.program}</span>
+                )}
+                {user?.isStudent && user?.requiresProgram && (
+                  <Link to="/profile/program" className="block text-xs text-amber-700 font-medium hover:underline">
+                    Sin carrera →
+                  </Link>
+                )}
+              </div>
               <button
                 onClick={handleLogout}
                 className="px-3 py-1.5 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"

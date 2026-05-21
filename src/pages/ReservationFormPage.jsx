@@ -8,6 +8,8 @@ import Button from '../components/common/Button'
 import Spinner from '../components/common/Spinner'
 import ErrorMessage from '../components/common/ErrorMessage'
 import BlockedNotice from '../components/BlockedNotice'
+import ProgramSetupBanner from '../components/ProgramSetupBanner'
+import { canStudentAccessSpace, formatAllowedPrograms } from '../utils/spaceAccess'
 
 export default function ReservationFormPage() {
   const { id } = useParams()
@@ -89,6 +91,19 @@ export default function ReservationFormPage() {
 
   const isFormValid = form.date && form.startTime && form.endTime && form.purpose.trim() && form.attendeeCount
 
+  if (user?.isStudent && user?.requiresProgram) {
+    return (
+      <section className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+        <ProgramSetupBanner />
+        <div className="text-center mt-6">
+          <Button variant="secondary" onClick={() => navigate('/spaces')}>
+            Volver a espacios
+          </Button>
+        </div>
+      </section>
+    )
+  }
+
   if (user?.isBlocked) {
     return (
       <section className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
@@ -107,6 +122,22 @@ export default function ReservationFormPage() {
       <div className="flex items-center justify-center py-20" role="status">
         <Spinner size="lg" />
       </div>
+    )
+  }
+
+  const programRestricted =
+    user?.isStudent && space && !canStudentAccessSpace(space, user.program)
+
+  if (space && programRestricted) {
+    return (
+      <section className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+        <ErrorMessage
+          message={`Este espacio no está disponible para la carrera ${user.program}. Carreras permitidas: ${formatAllowedPrograms(space.allowedPrograms)}.`}
+        />
+        <Button variant="secondary" className="mt-4" onClick={() => navigate('/spaces')}>
+          Volver a espacios
+        </Button>
+      </section>
     )
   }
 
@@ -169,6 +200,9 @@ export default function ReservationFormPage() {
           <p className="font-semibold text-gray-900">{space?.name}</p>
           <p className="text-sm text-gray-500">
             {space?.building} · {space?.capacity} personas
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            Carreras: {formatAllowedPrograms(space?.allowedPrograms)}
           </p>
         </div>
       </div>

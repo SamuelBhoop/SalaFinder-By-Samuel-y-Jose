@@ -23,7 +23,23 @@ export async function login(email, password) {
  * Register a new user then auto-login.
  * Returns { token, user }
  */
-export async function register({ email, password, fullName }) {
-  await http.post('/auth/register', { email, password, fullName, role: 'Student' })
+export async function getPrograms() {
+  const data = await http.get('/auth/programs')
+  return Array.isArray(data) ? data : []
+}
+
+export async function updateProgram(program) {
+  const data = await http.put('/auth/program', { program })
+  return normalizeUser(data)
+}
+
+export async function register({ email, password, fullName, program }) {
+  await http.post('/auth/register', {
+    email,
+    password,
+    fullName,
+    role: 'Student',
+    program,
+  })
   return login(email, password)
 }

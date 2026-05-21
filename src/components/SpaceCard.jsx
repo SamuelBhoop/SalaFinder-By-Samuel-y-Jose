@@ -3,13 +3,21 @@ import PropTypes from 'prop-types'
 import { useAuth } from '../context/AuthContext'
 import Button from './common/Button'
 import { getSpaceConfig } from '../utils/spaceImages'
+import { canStudentAccessSpace, formatAllowedPrograms } from '../utils/spaceAccess'
 
 export default function SpaceCard({ space }) {
   const navigate = useNavigate()
   const { user } = useAuth()
   const isBlocked = Boolean(user?.isBlocked)
+  const isStudent = Boolean(user?.isStudent)
+  const needsProgram = isStudent && user?.requiresProgram
+  const canReserve =
+    !isBlocked &&
+    !needsProgram &&
+    (!isStudent || canStudentAccessSpace(space, user?.program))
 
   const resources = space.resources ?? []
+  const programsLabel = formatAllowedPrograms(space.allowedPrograms)
   const config = getSpaceConfig(space.type)
 
   return (
@@ -39,6 +47,10 @@ export default function SpaceCard({ space }) {
           </span>
         </div>
 
+        <p className="text-xs text-gray-500 mb-3">
+          <span className="font-medium text-gray-600">Carreras:</span> {programsLabel}
+        </p>
+
         {resources.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-4 flex-1">
             {resources.map((resource) => (
@@ -52,14 +64,24 @@ export default function SpaceCard({ space }) {
         <Button
           onClick={() => navigate(`/spaces/${space.id}/reserve`)}
           className="w-full mt-auto"
-          disabled={isBlocked}
+          disabled={!canReserve}
           title={
             isBlocked
               ? 'Tu cuenta está bloqueada por no-show. No puedes crear reservas.'
-              : undefined
+              : needsProgram
+                ? 'Configura tu carrera en tu perfil para reservar.'
+                : !canReserve && isStudent
+                  ? `Este espacio es solo para: ${programsLabel}`
+                  : undefined
           }
         >
-          {isBlocked ? 'Reservas suspendidas' : 'Reservar espacio'}
+          {isBlocked
+            ? 'Reservas suspendidas'
+            : needsProgram
+              ? 'Configura tu carrera'
+              : !canReserve && isStudent
+                ? 'No disponible para tu carrera'
+                : 'Reservar espacio'}
         </Button>
       </div>
     </article>
@@ -74,5 +96,6 @@ SpaceCard.propTypes = {
     building: PropTypes.string.isRequired,
     type: PropTypes.string.isRequired,
     resources: PropTypes.arrayOf(PropTypes.string),
+    allowedPrograms: PropTypes.arrayOf(PropTypes.string),
   }).isRequired,
 }

@@ -1,5 +1,8 @@
 ﻿import { useState, useEffect } from 'react'
+import { useAuth } from '../context/AuthContext'
 import { getSpaces } from '../api/spaces'
+import ProgramSetupBanner from '../components/ProgramSetupBanner'
+import { canStudentAccessSpace } from '../utils/spaceAccess'
 import SpaceCard from '../components/SpaceCard'
 import Spinner from '../components/common/Spinner'
 import EmptyState from '../components/common/EmptyState'
@@ -7,11 +10,13 @@ import ErrorMessage from '../components/common/ErrorMessage'
 import Button from '../components/common/Button'
 
 export default function SpacesPage() {
+  const { user } = useAuth()
   const [spaces, setSpaces] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [filterCapacity, setFilterCapacity] = useState('all')
+  const [onlyMyProgram, setOnlyMyProgram] = useState(false)
 
   const fetchSpaces = async () => {
     setLoading(true)
@@ -43,7 +48,13 @@ export default function SpacesPage() {
       (filterCapacity === 'medium' && space.capacity > 8 && space.capacity <= 20) ||
       (filterCapacity === 'large' && space.capacity > 20)
 
-    return matchesSearch && matchesCapacity
+    const matchesProgram =
+      !onlyMyProgram ||
+      !user?.isStudent ||
+      user?.requiresProgram ||
+      canStudentAccessSpace(space, user.program)
+
+    return matchesSearch && matchesCapacity && matchesProgram
   })
 
   return (
@@ -55,6 +66,10 @@ export default function SpacesPage() {
           Encuentra y reserva el espacio perfecto para tus necesidades
         </p>
       </header>
+
+      {user?.isStudent && user?.requiresProgram && (
+        <ProgramSetupBanner className="mb-6" />
+      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -92,6 +107,17 @@ export default function SpacesPage() {
           <option value="large">Grande (más de 20)</option>
         </select>
 
+        {user?.isStudent && user?.program && (
+          <label className="flex items-center gap-2 px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm text-gray-700 cursor-pointer whitespace-nowrap">
+            <input
+              type="checkbox"
+              checked={onlyMyProgram}
+              onChange={(e) => setOnlyMyProgram(e.target.checked)}
+              className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+            />
+            Solo mi carrera ({user.program})
+          </label>
+        )}
       </div>
 
       {/* Content */}

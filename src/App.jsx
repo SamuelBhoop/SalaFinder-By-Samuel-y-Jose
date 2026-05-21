@@ -14,6 +14,7 @@ import AdminReservationsPage from './pages/AdminReservationsPage'
 import AdminNoShowPage from './pages/AdminNoShowPage'
 import AdminSpacesPage from './pages/AdminSpacesPage'
 import AdminAuditPage from './pages/AdminAuditPage'
+import ProfileProgramPage from './pages/ProfileProgramPage'
 
 export default function App() {
   return (
@@ -39,6 +40,7 @@ export default function App() {
             <Route path="/spaces/:id/reserve" element={<ReservationFormPage />} />
             <Route path="/my-reservations" element={<MyReservationsPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/profile/program" element={<ProfileProgramPage />} />
             <Route
               path="/admin/reservations"
               element={
