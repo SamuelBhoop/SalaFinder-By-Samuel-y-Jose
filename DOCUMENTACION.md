@@ -1,8 +1,13 @@
 # SalaFinder — Documentación del Proyecto
 
+**Última actualización:** mayo 2026  
+**Repositorios:** Frontend `SalaFinder-By-Samuel-y-Jose` · Backend `SalaFinders` (zhinfenix)
+
+---
+
 ## Descripción General
 
-**SalaFinder** es una aplicación web de reserva de espacios (salas, laboratorios, canchas) para entornos universitarios. Permite a los estudiantes buscar y reservar espacios disponibles, y al personal administrativo aprobar o rechazar las solicitudes.
+**SalaFinder** es una aplicación web de reserva de espacios (salas, laboratorios, canchas) para entornos universitarios. Los estudiantes buscan y reservan espacios; Admin y Staff aprueban solicitudes, marcan no-shows y gestionan el catálogo; Admin además consulta auditoría.
 
 ---
 
@@ -16,293 +21,248 @@
 └─────────────────┘       Respuestas JSON    └──────────────────────┘                   └──────────────┘
 ```
 
-- **Frontend**: React 19, Vite 8, Tailwind CSS 4, React Router 7
-- **Backend**: ASP.NET Core (.NET 10), Entity Framework Core, SQL Server
-- **Autenticación**: JWT Bearer tokens (3 horas de duración)
+| Capa | Tecnología |
+|------|------------|
+| Frontend | React 19, Vite 8, Tailwind CSS 4, React Router 7 |
+| Backend | ASP.NET Core (.NET 10), Entity Framework Core, SQL Server |
+| Auth | JWT Bearer (3 h), ASP.NET Identity |
+| Dev proxy | Vite redirige `/api` → `http://localhost:5155` |
 
 ---
 
-## Roles del Sistema
+## Roles y permisos
 
-| Rol       | Permisos |
-|-----------|----------|
-| Student   | Registrarse, buscar espacios, crear reservas, ver/cancelar sus propias reservas, ver calendario semanal |
-| Staff     | Todo lo de Student + aprobar/rechazar reservas pendientes, marcar no-show |
-| Admin     | Todo lo de Staff + crear/editar/eliminar espacios, ver logs de auditoría |
+| Rol | Permisos |
+|-----|----------|
+| **Student** | Registro, login, listar espacios, crear/cancelar sus reservas, calendario y “Mis reservas” |
+| **Staff** | Todo lo de Student + aprobar/rechazar pendientes + marcar **no-show** |
+| **Admin** | Todo lo de Staff + **CRUD de espacios** + **logs de auditoría** |
+
+### Navegación en el frontend (MainLayout)
+
+| Enlace | Roles |
+|--------|-------|
+| Espacios, Calendario, Mis Reservas | Todos autenticados |
+| Aprobar, No-show | Admin, Staff |
+| Espacios (admin), Auditoría | Solo Admin |
+
+---
+
+## Política de no-show y bloqueo
+
+### Backend
+
+| Regla | Valor |
+|-------|--------|
+| Umbral | 2 no-shows acumulados |
+| Bloqueo | 7 días (`BlockedUntil`) |
+| Marcar no-show | Solo reservas con estado **Approved** y `IsNoShow = false` |
+| Login bloqueado | Si `BlockedUntil > ahora`, no se emite JWT |
+| Crear reserva bloqueada | Respuesta 409 con mensaje explicativo |
+
+Al marcar no-show: incrementa `NoShowCount`, setea `IsNoShow = true`, registra auditoría `MarkedNoShow`.
+
+### Frontend
+
+| Comportamiento | Dónde |
+|----------------|--------|
+| Perfil con `isBlocked`, `noShowCount`, `blockedUntil` | `GET /auth/me` → `normalizeUser()` |
+| Refresco de perfil al cargar app y al entrar al layout | `AuthContext.refreshUser()` |
+| Banner naranja si está bloqueado | `BlockedNotice` en `MainLayout` |
+| Botón “Reservas suspendidas” deshabilitado | `SpaceCard` |
+| Formulario de reserva bloqueado | `ReservationFormPage` |
+| Mensaje claro en login si cuenta bloqueada | `LoginPage` |
 
 ---
 
 ## Frontend (React)
 
-### Stack tecnológico
-
-| Tecnología       | Versión | Uso |
-|------------------|---------|-----|
-| React            | 19.2    | UI reactiva con componentes funcionales y hooks |
-| Vite             | 8.0     | Bundler y servidor de desarrollo |
-| React Router DOM | 7.14    | Navegación SPA con rutas protegidas |
-| Tailwind CSS     | 4.2     | Estilos utilitarios |
-| prop-types       | 15.8    | Validación de props en desarrollo |
-
 ### Estructura de carpetas
 
 ```
 src/
-├── api/                  # Funciones de llamada al backend
-│   ├── auth.js           # Login y registro
-│   ├── reservations.js   # CRUD de reservas + aprobación
-│   └── spaces.js         # Consulta de espacios y disponibilidad
-├── components/           # Componentes reutilizables
+├── api/
+│   ├── auth.js           # login, register, getMe
+│   ├── reservations.js   # reservas, aprobación, no-show
+│   ├── spaces.js         # consulta y CRUD (admin)
+│   └── audit.js          # logs (admin)
+├── components/
 │   ├── common/           # Button, Spinner, ErrorMessage, EmptyState
-│   ├── ProtectedRoute.jsx    # Protege rutas para usuarios autenticados
-│   ├── RoleRoute.jsx         # Protege rutas por rol (Admin/Staff)
-│   ├── SpaceCard.jsx         # Tarjeta visual de un espacio
-│   └── ReservationCard.jsx   # Tarjeta visual de una reserva
+│   ├── BlockedNotice.jsx # aviso de cuenta bloqueada
+│   ├── ProtectedRoute.jsx
+│   ├── RoleRoute.jsx
+│   ├── SpaceCard.jsx
+│   └── ReservationCard.jsx
 ├── context/
-│   └── AuthContext.jsx   # Estado global de autenticación
+│   └── AuthContext.jsx   # sesión, refreshUser
 ├── layouts/
-│   ├── MainLayout.jsx    # Barra de navegación + contenido (usuarios autenticados)
-│   └── AuthLayout.jsx    # Layout minimalista para login/registro
+│   ├── MainLayout.jsx
+│   └── AuthLayout.jsx
 ├── lib/
-│   └── http.js           # Cliente HTTP centralizado (fetch + JWT)
-├── pages/                # Páginas completas
+│   └── http.js           # fetch + JWT + errores
+├── pages/
 │   ├── LoginPage.jsx
 │   ├── RegisterPage.jsx
 │   ├── SpacesPage.jsx
 │   ├── ReservationFormPage.jsx
 │   ├── MyReservationsPage.jsx
 │   ├── CalendarPage.jsx
-│   └── AdminReservationsPage.jsx
+│   ├── AdminReservationsPage.jsx   # aprobar / rechazar
+│   ├── AdminNoShowPage.jsx         # marcar no-show
+│   ├── AdminSpacesPage.jsx         # CRUD espacios (admin)
+│   └── AdminAuditPage.jsx          # auditoría (admin)
 ├── utils/
-│   └── spaceImages.js    # Iconos SVG y colores por tipo de espacio
-├── App.jsx               # Definición de rutas
-└── main.jsx              # Punto de entrada
+│   ├── authUser.js       # normalizeUser, formatBlockedUntil
+│   └── spaceImages.js    # iconos por tipo Room/Lab/Court
+├── App.jsx
+└── main.jsx
 ```
 
 ### Rutas
 
-| Ruta                   | Página                   | Acceso            |
-|------------------------|--------------------------|--------------------|
-| `/login`               | LoginPage                | Público             |
-| `/register`            | RegisterPage             | Público             |
-| `/spaces`              | SpacesPage               | Autenticado         |
-| `/spaces/:id/reserve`  | ReservationFormPage      | Autenticado         |
-| `/my-reservations`     | MyReservationsPage       | Autenticado         |
-| `/calendar`            | CalendarPage             | Autenticado         |
-| `/admin/reservations`  | AdminReservationsPage    | Admin o Staff       |
+| Ruta | Página | Acceso |
+|------|--------|--------|
+| `/login` | LoginPage | Público |
+| `/register` | RegisterPage | Público |
+| `/spaces` | SpacesPage | Autenticado |
+| `/spaces/:id/reserve` | ReservationFormPage | Autenticado (bloqueado si `isBlocked`) |
+| `/my-reservations` | MyReservationsPage | Autenticado |
+| `/calendar` | CalendarPage | Autenticado |
+| `/admin/reservations` | AdminReservationsPage | Admin, Staff |
+| `/admin/no-show` | AdminNoShowPage | Admin, Staff |
+| `/admin/spaces` | AdminSpacesPage | Solo Admin |
+| `/admin/audit` | AdminAuditPage | Solo Admin |
 
-### Páginas — Qué hace cada una
+### Páginas — resumen
 
-- **LoginPage**: formulario de email y contraseña. Llama a la API de login, guarda el token JWT en localStorage y redirige a `/spaces`.
-- **RegisterPage**: formulario de registro (nombre, email, contraseña, confirmar contraseña). Crea una cuenta con rol Student, hace login automático y redirige a `/spaces`.
-- **SpacesPage**: lista los espacios disponibles con búsqueda por nombre y filtro por tipo (Sala, Laboratorio, Cancha). Cada espacio se muestra como una tarjeta con botón para reservar.
-- **ReservationFormPage**: formulario para reservar un espacio específico. Incluye fecha, hora inicio/fin, propósito y cantidad de asistentes. Valida que la hora de fin sea posterior al inicio.
-- **MyReservationsPage**: muestra las reservas del usuario con pestañas de estado (Todas, Pendientes, Aprobadas, Rechazadas, Canceladas). Permite cancelar reservas pendientes o aprobadas.
-- **CalendarPage**: calendario semanal que muestra las reservas del usuario en formato de grilla por día.
-- **AdminReservationsPage**: solo para Admin/Staff. Lista las reservas pendientes de aprobación con botones para aprobar o rechazar (con opción de escribir razón de rechazo).
+| Página | Función |
+|--------|---------|
+| **LoginPage** | Login; mensaje específico si la cuenta está bloqueada por no-show |
+| **RegisterPage** | Alta con rol Student y login automático |
+| **SpacesPage** | Listado, búsqueda y filtros; tarjetas con icono por tipo |
+| **ReservationFormPage** | Crear reserva; bloqueada si el usuario tiene `isBlocked` |
+| **MyReservationsPage** | Mis reservas por pestañas; cancelar si pending/approved |
+| **CalendarPage** | Vista semanal de reservas propias |
+| **AdminReservationsPage** | Cola de pendientes; aprobar o rechazar (motivo opcional) |
+| **AdminNoShowPage** | Reservas aprobadas en rango de fechas; botón “No asistió” con confirmación |
+| **AdminSpacesPage** | Tabla de espacios; crear, editar, eliminar (solo Admin) |
+| **AdminAuditPage** | Tabla de logs con filtros por entidad, ID y límite |
 
-### Flujo de autenticación
+### API del frontend (módulos)
 
-1. El usuario entra a `/login` o `/register`
-2. Se envía la solicitud al backend (`POST /api/auth/login` o `POST /api/auth/register`)
-3. El backend devuelve un JWT
-4. El frontend guarda el token en `localStorage` y obtiene el perfil del usuario (`GET /api/auth/me`)
-5. `AuthContext` provee el usuario a toda la app
-6. Todas las llamadas API incluyen el header `Authorization: Bearer <token>`
-7. Si el backend responde con 401, el frontend limpia la sesión y redirige a `/login`
+**auth.js:** `login`, `register`, `getMe`  
+**reservations.js:** `getMyReservations`, `createReservation`, `cancelReservation`, `getPendingReservations`, `approveReservation`, `rejectReservation`, `getNoShowCandidates`, `markNoShow`, `getReservationById`  
+**spaces.js:** `getSpaces`, `getSpaceById`, `getSpacesAvailability`, `createSpace`, `updateSpace`, `deleteSpace`  
+**audit.js:** `getAuditLogs({ entityType, entityId, limit })`
+
+### Variables de entorno (frontend)
+
+| Variable | Desarrollo | Producción |
+|----------|------------|------------|
+| `VITE_API_URL` | `/api` (proxy Vite) | `https://TU-API.azurewebsites.net/api` |
+| `VITE_BACKEND_URL` | `http://localhost:5155` | (solo dev, proxy) |
 
 ### Cliente HTTP (`http.js`)
 
-Módulo centralizado que envuelve `fetch()` y agrega:
-- Header `Authorization` automático si hay token
-- Manejo de errores (401 → cierre de sesión, otros → extrae mensaje del body JSON)
-- Métodos: `http.get()`, `http.post()`, `http.patch()`, `http.delete()`
+- Base URL desde `VITE_API_URL`
+- Header `Authorization: Bearer <token>`
+- 401 → limpia sesión y redirige a `/login`
+- Errores: lee `message` o `Message` del JSON
+- Métodos: `get`, `post`, `put`, `patch`, `delete`
 
 ---
 
 ## Backend (ASP.NET Core)
 
-### Stack tecnológico
-
-| Tecnología                   | Versión | Uso |
-|------------------------------|---------|-----|
-| ASP.NET Core                 | .NET 10 | Framework web |
-| Entity Framework Core        | 10.0    | ORM para SQL Server |
-| ASP.NET Identity             | 10.0    | Gestión de usuarios y roles |
-| JWT Bearer Authentication    | 10.0    | Autenticación por tokens |
-| Scalar                       | 2.0     | Documentación interactiva de API (solo dev) |
-
-### Estructura de carpetas
-
-```
-SalaFinders/
-├── Controllers/
-│   ├── AuthController.cs         # Registro, login, perfil
-│   ├── SpacesController.cs       # CRUD de espacios + disponibilidad
-│   ├── ReservationsController.cs # Crear, cancelar, aprobar, rechazar reservas
-│   └── AuditController.cs       # Consulta de logs de auditoría
-├── Data/
-│   ├── ApplicationDbContext.cs   # Configuración de EF Core + relaciones
-│   └── DbSeeder.cs              # Datos iniciales (usuarios demo, reservas)
-├── Interfaces/                   # Contratos de servicios
-├── Models/
-│   ├── ApplicationUser.cs        # Usuario (extiende IdentityUser)
-│   ├── Space.cs                  # Espacio reservable
-│   ├── Reservation.cs            # Reserva con estado
-│   ├── AuditLog.cs               # Registro de auditoría
-│   └── DTOs/                     # Objetos de transferencia
-├── Services/                     # Implementación de lógica de negocio
-├── Migrations/                   # Migraciones de EF Core
-└── Program.cs                    # Configuración y pipeline
-```
-
 ### Endpoints de la API
 
-#### Autenticación (`/api/auth`)
+#### Autenticación — `/api/auth`
 
-| Método | Ruta              | Auth | Descripción |
-|--------|--------------------|------|-------------|
-| POST   | `/api/auth/register` | No   | Registrar nuevo usuario |
-| POST   | `/api/auth/login`    | No   | Iniciar sesión, devuelve JWT |
-| GET    | `/api/auth/me`       | Sí   | Obtener perfil y roles del usuario actual |
+| Método | Ruta | Auth | Descripción |
+|--------|------|------|-------------|
+| POST | `/register` | No | Registrar usuario |
+| POST | `/login` | No | JWT (falla si usuario bloqueado) |
+| GET | `/me` | Sí | Perfil: `fullName`, `roles`, `noShowCount`, `blockedUntil`, `isBlocked` |
 
-#### Espacios (`/api/spaces`)
+#### Espacios — `/api/spaces`
 
-| Método | Ruta                      | Auth     | Descripción |
-|--------|----------------------------|----------|-------------|
-| GET    | `/api/spaces`              | No       | Listar espacios (con filtros opcionales) |
-| GET    | `/api/spaces/{id}`         | No       | Detalle de un espacio |
-| GET    | `/api/spaces/availability` | No       | Disponibilidad semanal (slots de 30 min) |
-| POST   | `/api/spaces`              | Admin    | Crear espacio |
-| PUT    | `/api/spaces/{id}`         | Admin    | Actualizar espacio |
-| DELETE | `/api/spaces/{id}`         | Admin    | Eliminar espacio |
+| Método | Ruta | Auth | Descripción |
+|--------|------|------|-------------|
+| GET | `/` | No | Listar (filtros opcionales) |
+| GET | `/{id}` | No | Detalle |
+| GET | `/availability` | No | Slots semanales 30 min (08:00–20:00) |
+| POST | `/` | Admin | Crear |
+| PUT | `/{id}` | Admin | Actualizar |
+| DELETE | `/{id}` | Admin | Eliminar |
 
-#### Reservas (`/api/reservations`)
+#### Reservas — `/api/reservations`
 
-| Método | Ruta                              | Auth        | Descripción |
-|--------|-------------------------------------|-------------|-------------|
-| POST   | `/api/reservations`                | Autenticado | Crear reserva |
-| GET    | `/api/reservations/{id}`           | Autenticado | Ver detalle de una reserva |
-| GET    | `/api/reservations/my`             | Autenticado | Mis reservas |
-| GET    | `/api/reservations/pending`        | Admin/Staff | Reservas pendientes de aprobación |
-| POST   | `/api/reservations/{id}/approve`   | Admin/Staff | Aprobar reserva |
-| POST   | `/api/reservations/{id}/reject`    | Admin/Staff | Rechazar reserva (con razón opcional) |
-| POST   | `/api/reservations/{id}/cancel`    | Autenticado | Cancelar mi reserva |
-| POST   | `/api/reservations/{id}/no-show`   | Admin/Staff | Marcar como no-show |
+| Método | Ruta | Auth | Descripción |
+|--------|------|------|-------------|
+| POST | `/` | Autenticado | Crear (rechaza si bloqueado o conflicto) |
+| GET | `/{id}` | Autenticado | Detalle |
+| GET | `/my` | Autenticado | Mis reservas |
+| GET | `/pending` | Admin, Staff | Pendientes de aprobación |
+| GET | `/no-show-candidates` | Admin, Staff | Aprobadas sin no-show en rango de fechas |
+| POST | `/{id}/approve` | Admin, Staff | Aprobar |
+| POST | `/{id}/reject` | Admin, Staff | Rechazar (`reason` opcional) |
+| POST | `/{id}/cancel` | Autenticado | Cancelar (propietario) |
+| POST | `/{id}/no-show` | Admin, Staff | Marcar no-show |
 
-#### Auditoría (`/api/audit`)
+#### Auditoría — `/api/audit`
 
-| Método | Ruta         | Auth  | Descripción |
-|--------|--------------|-------|-------------|
-| GET    | `/api/audit` | Admin | Consultar logs de auditoría |
+| Método | Ruta | Auth | Descripción |
+|--------|------|------|-------------|
+| GET | `/` | Admin | Logs (`entityType`, `entityId`, `limit`) |
 
-### Modelo de datos
+### Modelo de datos (resumen)
 
-```
-┌─────────────────┐     1:N     ┌──────────────────┐     N:1     ┌─────────────────┐
-│  ApplicationUser │────────────│    Reservation     │────────────│      Space       │
-│                 │             │                    │             │                 │
-│  Id (string)    │             │  Id (int)          │             │  Id (int)       │
-│  FullName       │             │  SpaceId           │             │  Name           │
-│  Email          │             │  UserId            │             │  Type           │
-│  NoShowCount    │             │  Date              │             │  Capacity       │
-│  BlockedUntil   │             │  StartTime         │             │  Building       │
-│  (+ Identity)   │             │  EndTime           │             │  Resources      │
-└─────────────────┘             │  Purpose           │             │  AllowedPrograms│
-                                │  AttendeeCount     │             │  RequiresApproval│
-                                │  Status (enum)     │             └─────────────────┘
-                                │  CreatedAt         │
-                                │  RejectedReason    │
-                                │  IsNoShow          │
-                                └──────────────────┘
+- **ApplicationUser:** `FullName`, `NoShowCount`, `BlockedUntil` + campos Identity  
+- **Space:** `Name`, `Type` (Room/Lab/Court), `Capacity`, `Building`, `Resources`, `AllowedPrograms`, `RequiresApproval`  
+- **Reservation:** fechas/horas, `Status` (Pending/Approved/Rejected/Cancelled), `IsNoShow`, `RejectedReason`  
+- **AuditLog:** `EntityType`, `EntityId`, `Action`, `UserId`, `OldValues`, `NewValues`, `Timestamp`
 
-┌─────────────────┐
-│    AuditLog      │
-│  Id             │
-│  EntityType     │
-│  EntityId       │
-│  Action         │
-│  UserId         │
-│  OldValues      │
-│  NewValues      │
-│  Timestamp      │
-└─────────────────┘
-```
+### CORS
 
-#### Estados de una reserva (`ReservationStatus`)
+Orígenes configurables en `appsettings.json` → sección `Cors:Origins`. En producción incluir la URL de Vercel.
 
-| Estado    | Descripción |
-|-----------|-------------|
-| Pending   | Esperando aprobación de Admin/Staff |
-| Approved  | Aprobada y confirmada |
-| Rejected  | Rechazada por Admin/Staff |
-| Cancelled | Cancelada por el usuario |
+### Datos demo (seed)
 
-### Lógica de negocio destacada
+| Usuario | Rol | Contraseña |
+|---------|-----|------------|
+| admin@salafinders.com | Admin | Admin123! |
+| staff@salafinders.com | Staff | Staff123! |
+| student1@salafinders.com … student13 | Student | Student123! |
 
-- **Creación de reserva**: si el espacio tiene `RequiresApproval = true`, la reserva se crea como `Pending`. Si no, se aprueba automáticamente.
-- **Validación de conflictos**: al crear o aprobar una reserva, se verifica que no haya solapamiento con otras reservas aprobadas del mismo espacio.
-- **Política de no-show**: si un usuario acumula 2+ no-shows, queda bloqueado por 7 días y no puede hacer nuevas reservas.
-- **Auditoría**: todas las operaciones sobre reservas (crear, aprobar, rechazar, cancelar, no-show) generan un registro en `AuditLog`.
-
-### Datos iniciales (Seed)
-
-El sistema viene pre-configurado con:
-
-| Tipo | Datos |
-|------|-------|
-| Roles | Admin, Staff, Student |
-| Espacios | 6 espacios (2 salas, 2 laboratorios, 1 cancha, 1 sala adicional) |
-| Usuarios demo | admin@salafinders.com (Admin), staff@salafinders.com (Staff), student1–13@salafinders.com (Student) |
-| Contraseñas demo | Admin123!, Staff123!, Student123! |
-
-### Configuración (`appsettings.json`)
-
-```json
-{
-  "Jwt": {
-    "Key": "<clave secreta>",
-    "Issuer": "SalaFinders",
-    "Audience": "UsuariosSalaFinders"
-  },
-  "ConnectionStrings": {
-    "DefaultConnection": "<connection string de SQL Server>"
-  },
-  "Cors": {
-    "Origins": ["http://localhost:5173"]
-  }
-}
-```
-
-En producción, las variables sensibles se configuran como Application Settings en Azure App Service.
+6 espacios precargados (salas, laboratorios, cancha).
 
 ---
 
-## Despliegue
+## Despliegue (planificado)
 
-| Componente | Plataforma | URL |
-|------------|------------|-----|
-| Frontend   | Vercel     | https://TU-PROYECTO.vercel.app |
-| Backend    | Azure App Service (.NET 10) | https://TU-API.azurewebsites.net |
-| Base de datos | Azure SQL Database | Accesible solo desde App Service |
+| Componente | Plataforma |
+|------------|------------|
+| Frontend | Vercel |
+| Backend | Azure App Service (.NET 8/10) |
+| Base de datos | Azure SQL Database |
 
-### Variables de entorno en producción
-
-**Vercel (Frontend):**
-- `VITE_API_URL` = `https://TU-API.azurewebsites.net/api`
-
-**Azure App Service (Backend):**
-- `ConnectionStrings__DefaultConnection` = connection string de Azure SQL
-- `Jwt__Key` = clave secreta de producción
-- `Jwt__Issuer` = SalaFinders
-- `Jwt__Audience` = UsuariosSalaFinders
-- `Cors__Origins__0` = https://TU-PROYECTO.vercel.app
+**Vercel:** `VITE_API_URL=https://TU-API.azurewebsites.net/api`  
+**Azure:** `ConnectionStrings__DefaultConnection`, `Jwt__*`, `Cors__Origins__0`
 
 ---
 
 ## Cómo ejecutar en desarrollo
 
-### Frontend
+### 1. Backend
+
+```bash
+cd C:\Users\User\.vscode\SalaFinders\SalaFinders
+dotnet run
+```
+
+URL típica: `http://localhost:5155`
+
+### 2. Frontend
 
 ```bash
 cd mi-proyecto
@@ -310,20 +270,43 @@ npm install
 npm run dev
 ```
 
-Acceder a `http://localhost:5173`
+URL: `http://localhost:5173` (o 5174 si 5173 está ocupado)
 
-### Backend
+### 3. Archivo `.env` (frontend)
 
-```bash
-cd SalaFinders/SalaFinders
-dotnet run
+```
+VITE_API_URL=/api
+VITE_BACKEND_URL=http://localhost:5155
 ```
 
-El backend corre en `http://localhost:5155` (o el puerto que indique la consola).
-
-### Requisitos previos
+### Requisitos
 
 - Node.js 18+
 - .NET SDK 10
-- SQL Server (local o Express)
-- La base de datos se crea automáticamente al iniciar el backend (migrations + seed)
+- SQL Server local (o la connection string configurada en el backend)
+- Migraciones y seed al arrancar el backend
+
+---
+
+## Flujos de prueba rápidos
+
+1. **Estudiante:** login → Espacios → Reservar → Mis reservas / Calendario  
+2. **Staff:** Aprobar reservas pendientes → No-show en reservas aprobadas pasadas  
+3. **Admin:** Gestionar espacios (crear/editar/borrar) → Auditoría  
+4. **Bloqueo:** marcar 2 no-shows a un estudiante → recargar su sesión → banner + sin reservas; login bloqueado hasta `BlockedUntil`
+
+---
+
+## Historial de cambios recientes (frontend + API)
+
+- Registro de usuarios (`/register`) y capa API unificada (`http.js`, `AuthContext`)
+- Aprobación/rechazo de reservas (Admin/Staff)
+- No-show: listado de candidatos + marcado + bloqueo 7 días en UI
+- CRUD de espacios y vista de auditoría (solo Admin)
+- Iconos por tipo de espacio (`spaceImages.js`) sin dependencia de URLs externas
+- CORS configurable en backend para despliegue
+- Documentación ampliada (este archivo)
+
+---
+
+*Documento generado para el proyecto SalaFinder. Para copia local: `DOCUMENTACION.md` en la raíz del repositorio frontend.*
